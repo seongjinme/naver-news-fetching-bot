@@ -1,28 +1,28 @@
 function globalVariables() { 
   return values = {
 
-    // 디버그 모드 (true/false, 기본값: false)
+    // 디버그 모드 설정 (true/false, 기본값: false)
     DEBUG: false,
 
-    // 모니터링할 네이버뉴스 검색어
+    // 모니터링할 검색어 입력
     keyword: "[KEYWORD]",
 
-    // 구글챗 스페이스(Google Chat Space) 공간에 설정된 웹훅(Webhook) URL
+    // 구글챗 대화방(Google Chat Space)에 설정된 웹훅(Webhook) URL 입력
     webhook: "https://chat.googleapis.com/v1/spaces/[SPACE_ID]/messages?key=[KEY]&token=[TOKEN]",
 
-    // 구글챗 스페이스(Google Chat Space) 공간에 전송될 뉴스 항목의 카드 포맷 전송 여부 (true/false, 기본값: true)
+    // 구글챗 대화방(Google Chat Space)에 전송될 뉴스 항목의 카드 형태 전송 여부 설정 (true/false, 기본값: true)
     card: true,
 
-    // 뉴스 항목의 구글 스프레드시트 아카이빙 허용 여부 (true/false, 기본값: true)
+    // 뉴스 항목의 구글 스프레드시트 아카이빙 허용 여부 설정 (true/false, 기본값: true)
     allowArchiving: true,
 
-    // 뉴스 항목을 아카이빙할 구글 스프레드시트 문서 ID값
+    // 뉴스 항목을 아카이빙할 구글 스프레드시트 문서 ID값 입력
     spreadsheetId: "[SPREADSHEET_ID]",
 
-    // 뉴스 항목을 아카이빙할 구글 스프레드시트 문서의 해당 시트 이름
+    // 뉴스 항목을 아카이빙할 구글 스프레드시트 문서의 해당 시트 이름 입력
     sheetName: "[SHEET_NAME]",
 
-    // 새로 받은 뉴스 항목이 업데이트될 셀 영역의 좌상단 첫 번째 셀 경로 (제목행 다음줄의 첫 번째 셀)
+    // 새로 받은 뉴스 항목이 업데이트될 셀 영역의 좌상단 첫 번째 셀 경로 입력 (제목행 다음줄의 첫 번째 셀)
     sheetTargetCell: "[SHEET_NAME]!A2"
 
   };
