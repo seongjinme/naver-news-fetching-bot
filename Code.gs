@@ -5,7 +5,7 @@
  * Google Apps Script와 네이버 검색 오픈 API를 이용합니다.
  * 
  * - Github : https://github.com/seongjinme/naver-news-fetching-bot
- * - 문의사항 : hongseongjin.to@gmail.com
+ * - 문의사항 : mail@seongjin.me
  * ***************************************************************************/
 
 function globalVariables() { 
