@@ -7,10 +7,10 @@ Naver News Fetching Bot 은 Google Workspace 기반 업무 환경에서 네이�
 * Google Apps Script의 트리거 기능으로 갱신 주기를 자유롭게 정할 수 있습니다.
 
 ### 문서 목차
-* [Update Notes](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#update-notes)
-* [Requirements](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#requirements)
-* [Installation](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#installation)
-* [License](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#license)
+* [Update Notes](https://github.com/seongjinme/naver-news-fetching-bot/#update-notes)
+* [Requirements](https://github.com/seongjinme/naver-news-fetching-bot/#requirements)
+* [Installation](https://github.com/seongjinme/naver-news-fetching-bot/#installation)
+* [License](https://github.com/seongjinme/naver-news-fetching-bot/#license)
 
 ### Screenshot
 
