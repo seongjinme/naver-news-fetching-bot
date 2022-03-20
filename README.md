@@ -1,14 +1,32 @@
 # Naver News Fetching Bot
 
-Naver News Fetching Bot 은 Google Workspace 기반 업무 환경에서 네이버 뉴스 모니터링과 아카이빙을 자동화하는 도구입니다. Slack, Jandi 등의 협업툴에서 제공하는 RSS 피드 연동 기능보다 조금 더 발전된 형태의 기능을 제공합니다.
+Naver News Fetching Bot 은 Google Workspace 기반 업무 환경에서 네이버 뉴스 모니터링과 아카이빙을 자동화하는 도구입니다. 네이버 오픈 API 기반으로 Slack, Jandi 등의 협업툴에서 제공하는 RSS 피드 연동에 더하여 조금 더 발전된 형태의 기능을 제공합니다.
 
 * 원하는 키워드가 포함된 최신 네이버 뉴스 항목을 Google Chat의 팀 공용 Space에 자동으로 공유합니다.
 * 공유된 뉴스 항목을 Google Sheets 문서에 자동으로 아카이빙 합니다. 이 기능은 필요에 따라 켜고 끌 수 있습니다.
 * Google Apps Script의 트리거 기능으로 갱신 주기를 자유롭게 정할 수 있습니다.
 
+### 문서 목차
+* [Update Notes](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#update-notes)
+* [Requirements](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#requirements)
+* [Installation](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#installation)
+* [License](https://github.com/seongjinme/naver-news-fetching-bot/edit/main/README.md#license)
+
 ### Screenshot
 
-<img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/chat_item_card.jpg" width="400" alt="Example image">
+<img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/chat_item_card_v2.0.jpg" width="400" alt="Example image">
+
+## Update Notes
+### Ver 2.0 (2022-03-20)
+* 네이버 뉴스의 **RSS Feed 지원 중단**에 대비하여 뉴스봇 구동 기반을 **네이버 오픈 API**로 대체했습니다.
+  - 따라서 네이버 오픈 API 이용에 필요한 Client ID, Secret 정보를 추가로 입력해주셔야 합니다.
+  - 해당 정보의 획득 방법은 [네이버의 공식 문서](https://developers.naver.com/docs/common/openapiguide/appregister.md)를 참고해주세요.
+* 네이버 오픈 API의 기능상 제한점으로 인해 일부 데이터 필드(매체명, 카테고리, 썸네일)가 더이상 지원되지 않습니다.
+* API 응답 코드가 정상(200)인 경우에만 뉴스봇 기능이 구동되도록 예외 처리 부분이 추가되었습니다.
+* 제목과 본문 데이터 필드에 포함된 불필요한 HTML Tag 및 Entity들이 필터링되도록 했습니다.
+
+### Ver 1.0 (2021-10-18)
+* RSS Feed에 기반한 최초 배포 버전입니다.
 
 ## Requirements
 
@@ -27,31 +45,40 @@ Naver News Fetching Bot 은 Google Workspace 기반 업무 환경에서 네이�
 2. 새로 추가할 Webhook의 이름과 프로필 사진 URL(선택사항)을 입력합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_webhook.png" alt="Add new webhook in Google Chat"></p>
 3. 새로 생성된 Webhook의 URL을 복사, 메모합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_webhook_result.png" alt="Copy URL of new webhook in Google Chat"></p>
 
-### 2. Google Apps Script에서 스크립트 삽입 및 API 추가
+### 2. 네이버 개발자 센터에서 API용 Client ID, Secret 생성
+
+1. [네이버측 공식 가이드 문서](https://developers.naver.com/docs/common/openapiguide/appregister.md)를 참고하여 [이 페이지](https://developers.naver.com/apps/#/wizard/register)에서 애플리케이션 등록 절차를 진행합니다.
+2. [애플리케이션 등록 세부 정보 입력 단계](https://developers.naver.com/docs/common/openapiguide/appregister.md#%EC%95%A0%ED%94%8C%EB%A6%AC%EC%BC%80%EC%9D%B4%EC%85%98-%EB%93%B1%EB%A1%9D-%EC%84%B8%EB%B6%80-%EC%A0%95%EB%B3%B4)에서 다음과 같이 입력합니다.
+- 애플리케이션 이름 : 임의로 입력합니다.
+- 사용 API : "검색"을 선택합니다.
+- 로그인 오픈 API 서비스 환경 : "naver.com"을 입력합니다.
+3. 애플리케이션 등록이 완료되면, [해당 애플리케이션 정보 화면](https://developers.naver.com/docs/common/openapiguide/appregister.md#%EC%95%A0%ED%94%8C%EB%A6%AC%EC%BC%80%EC%9D%B4%EC%85%98-%EB%93%B1%EB%A1%9D-%ED%99%95%EC%9D%B8)에 나타나는 Client ID와 Secret값을 체크합니다.
+
+### 3. Google Apps Script에서 스크립트 삽입 및 API 추가
 
 1. [Google Apps Script](https://script.google.com) 에서 새 프로젝트를 생성합니다.
 2. 생성된 프로젝트에 포함된 <code>Code.gs</code> 에 Repo의 [/Code.gs](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/Code.gs) 파일 내용을 붙여넣습니다.
 3. 좌측 화면에서 “서비스” 항목의 우측 “+” 버튼을 누르고, API 추가 팝업 화면에서 <code>“Google Sheets API”</code>를 찾아 선택 후 추가합니다. 이때 식별자 이름은 기본값인 <code>“Sheets”</code>를 유지합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_sheets_api.png" alt="Add Google Sheets API to the project"></p>
 
-### 3. <code>globalVariales()</code> 내 주요 설정값 삽입
-1번은 디버그 모드, 2-4번은 모니터링 기능, 5-8번은 아카이빙 기능 관련 설정값입니다. true/false로 나뉘는 항목들 외에는 해당 설정값들이 반드시 겹 따옴표(“”) 안에 위치해야 합니다. 이때 대괄호(“[]”)는 지우고 넣어주세요.
+### 4. <code>globalVariales()</code> 내 주요 설정값 삽입
+설정값이 `true` 또는 `false`로 지정된 항목들 외에는 해당 설정값들이 반드시 겹 따옴표(“”) 안에 위치해야 합니다. 이때 대괄호(“[]”)는 지우고 넣어주세요.
 
-<img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/set_variables.png" alt="Set global variables">
+1. <code>DEBUG</code> : 디버그 모드 ON/OFF (true/false로만 입력, 기본값: false)
+2. <code>clientId</code> : 네이버 검색 오픈 API 접근 가능한 Client ID 값
+3. <code>clientSecret</code> : 네이버 검색 오픈 API 접근 가능한 Client Secret 값
+4. <code>keyword</code> : 모니터링할 네이버뉴스 검색어
+5. <code>webhook</code> : 위에서 생성한 Webhook의 URL 전체
+6. <code>card</code> : 뉴스 항목의 카드 포맷 전송 여부 (true/false로만 입력, 기본값: true)
+7. <code>allowArchiving</code> : 뉴스 항목의 구글 시트 저장 여부 (true/false로만 입력, 기본값: true)
+8. <code>spreadsheetId</code> : 뉴스 항목을 저장할 구글 시트 문서 ID값 (*)
+9. <code>sheetName</code> : 뉴스 항목을 저장할 구글 시트 문서의 해당 시트 이름 (*)
+10. <code>sheetTargetCell</code> : 뉴스 항목을 저장할 구글 시트 셀 영역의 좌상단 첫 번째 셀 경로 (제목행 다음줄의 첫 번째 셀) (*)
 
-1. <code>DEBUG</code> : 디버그 모드를 설정합니다. (true/false, 기본값: false)
-2. <code>keyword</code> : 모니터링할 검색어를 입력합니다.
-3. <code>webhook</code> : 위에서 생성한 Webhook의 URL을 그대로 입력합니다.
-4. <code>card</code> : 대화방에 전송될 뉴스 항목을 카드 형태로 전송할지 여부를 결정합니다. (true/false, 기본값: true)
-5. <code>allowArchiving</code> : 대화방에 전송된 뉴스 항목을 Google Sheets 문서로 아카이빙할지 결정합니다. (true/false, 기본값: true)
-6. <code>spreadsheetId</code> : 뉴스 항목을 아카이빙할 Google Sheets 문서의 ID값을 입력합니다. (*)
-7. <code>sheetName</code> : 뉴스 항목을 아카이빙할 6번 문서의 해당 시트 이름을 입력합니다. (*)
-8. <code>sheetTargetCell</code> : 뉴스 항목이 업데이트될 셀 영역의 좌상단 첫 번째 셀 경로를 입력합니다. 제목행 다음 줄의 첫 번째 셀 주소에 해당됩니다. (*)
+(* 7번이 false일 경우 8~10번은 비워두셔도 무방합니다.)
 
-(* 5번이 false일 경우 6~8번은 비워두셔도 무방합니다.)
+### 5. 스크립트 최초 실행 및 권한 부여
 
-### 4. 스크립트 최초 실행 및 권한 부여
-
-1. Google Apps Script 화면 상단에서 아래 사진과 같은 영역을 확인 후, 함수명을 <code>“getArticle”</code>로 선택 후 “실행”을 클릭합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/run.png" alt="Run getArticle()"></p>
+1. Google Apps Script 화면 상단에서 아래 사진과 같은 영역을 확인 후, 함수명을 <code>“runFetchingBot”</code>로 선택 후 “실행”을 클릭합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/run_v2.0.png" alt="Run runFetchingBot()"></p>
 2. 아래와 같이 권한 인증 팝업이 뜹니다. “권한 검토”를 누릅니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/auth_popup_required.png" alt="Review auth popup"></p>
 3. 앞서 진행한 Google Chat과 Sheets 관련 액세스 허용 팝업이 뜹니다. “허용”을 누릅니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/auth_popup_allow.png" alt="Allow authentication"></p>
 4. Google Apps Script 화면 하단의 “실행 로그” 영역에 “초기 설정이 완료되었습니다. 다음 실행 때부터 지금 시각 이후에 게재된 최신 뉴스를 가져옵니다.” 라는 문구가 뜨면 정상적으로 설정이 완료된 것입니다.
@@ -59,10 +86,10 @@ Naver News Fetching Bot 은 Google Workspace 기반 업무 환경에서 네이�
 
 (* 이 Apps Script 프로젝트는 별도의 배포(Deploy) 과정이 필요하지 않습니다.)
 
-### 5. 자동 갱신 트리거 설정
+### 6. 자동 갱신 트리거 설정
 
 1. Google Apps Script 화면 좌측에서 시계 모양의 아이콘(트리거)을 클릭한 후, 새 트리거를 추가합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_trigger.png" alt="Add new trigger"></p>
-2. 실행할 함수를 <code>“getArticle”</code>로 지정한 뒤, 원하시는 시간 간격을 설정합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_trigger_popup.png" alt="Set new trigger to refresh news items"></p>
+2. 실행할 함수를 <code>“runFetchingBot”</code>로 지정한 뒤, 원하시는 시간 간격을 설정합니다.
 3. 이제 지정된 시간 간격마다 새로 업데이트 되는 뉴스 항목들을 보실 수 있습니다.
 
 ## License
