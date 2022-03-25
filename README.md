@@ -78,7 +78,8 @@ Naver News Fetching Bot 은 Webhook을 이용하여 네이버 뉴스 모니터�
 
 1. [Google Apps Script](https://script.google.com) 에서 새 프로젝트를 생성합니다.
 2. 생성된 프로젝트에 포함된 <code>Code.gs</code> 에 Repo의 [/Code.gs](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/Code.gs) 파일 내용을 붙여넣습니다.
-3. 좌측 화면에서 “서비스” 항목의 우측 “+” 버튼을 누르고, API 추가 팝업 화면에서 <code>“Google Sheets API”</code>를 찾아 선택 후 추가합니다. 이때 식별자 이름은 기본값인 <code>“Sheets”</code>를 유지합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_sheets_api.png" alt="Add Google Sheets API to the project"></p>
+3. 프로젝트에 새 파일 `source.gs`를 추가하고 Repo의 [/source.gs](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/source.gs) 파일 내용을 붙여넣습니다.
+4. 좌측 화면에서 “서비스” 항목의 우측 “+” 버튼을 누르고, API 추가 팝업 화면에서 <code>“Google Sheets API”</code>를 찾아 선택 후 추가합니다. 이때 식별자 이름은 기본값인 <code>“Sheets”</code>를 유지합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_sheets_api.png" alt="Add Google Sheets API to the project"></p>
 
 ### 4. <code>globalVariales()</code> 내 주요 설정값 삽입
 설정값이 `true` 또는 `false`로 지정된 항목들 외에는 해당 설정값들이 반드시 겹 따옴표(“”) 안에 위치해야 합니다. 이때 대괄호(“[]”)는 지우고 넣어주세요.
