@@ -14,8 +14,7 @@ Naver News Fetching Bot 은 Webhook을 이용하여 네이버 뉴스 모니터�
 
 ### Screenshot
 
-<img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/chat_item_card_v2.1_google.jpg" width="400" alt="Example image (Google Chat)">
-<img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/chat_item_card_v2.1_slack.jpg" width="400" alt="Example image (Slack)">
+<img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/chat_item_card_v2.0.jpg" width="400" alt="Example image (Google Chat)">
 
 ## Update Notes
 ### Ver 2.1 (2022-03-25)
