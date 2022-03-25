@@ -1,48 +1,67 @@
-/*****************************************************************************
- * Naver News Fetching Bot (v2.0)
- * ***************************************************************************
- * 특정 검색어의 네이버 뉴스피드를 구글챗 스페이스(Google Chat Space)로 중계합니다.
+/*************************************************************************************************
+ * Naver News Fetching Bot (v2.1)
+ * ***********************************************************************************************
+ * 특정 검색어의 네이버 뉴스피드를 구글챗(Google Chat Space) 또는 슬랙(Slack)으로 중계합니다.
  * Google Apps Script와 네이버 검색 오픈 API를 이용합니다.
  * 
  * - Github : https://github.com/seongjinme/naver-news-fetching-bot
  * - 문의사항 : mail@seongjin.me
- * ***************************************************************************/
+ * ***********************************************************************************************/
 
 function globalVariables() { 
 
-  /***************************************************************************
+  /***********************************************************************************************
    * 뉴스봇 구동에 필요한 설정값들입니다. 아래 설명을 참고하시어 입력해주세요.
-   * *************************************************************************
+   * *********************************************************************************************
+   * - allowBotGoogle, allowBotSlack, allowArchiving 중 하나 이상은 반드시 true로 설정되어야 합니다.
    * - true/false로만 입력하는 경우 외엔 설정값 앞뒤로 쌍따옴표("")가 반드시 필요합니다.
    * - 마지막 항목 외에는 모든 설정값 끝에 쉼표(,)가 반드시 필요합니다.
-   * *************************************************************************
+   * *********************************************************************************************
    * DEBUG           : 디버그 모드 ON/OFF (true/false로만 입력, 기본값: false)
    * 
    * clientId        : 네이버 검색 오픈 API 접근 가능한 Client ID 값
    * clientSecret    : 네이버 검색 오픈 API 접근 가능한 Client Secret 값
    * 
-   * keyword         : 모니터링할 네이버뉴스 검색어
-   * webhook         : Google Chat Space 공간에 설정된 웹훅(Webhook) URL
-   * card            : 뉴스 항목의 카드 포맷 전송 여부 (true/false로만 입력, 기본값: true)
+   * keyword         : 모니터링할 네이버 뉴스 검색어
+   * 
+   * allowBotGoogle  : 뉴스 항목의 Google Chat Space 전송 여부 (true/false로만 입력)
+   * webhookGoogle   : Google Chat Space 공간에 설정된 웹훅(Webhook) URL
+   * 
+   * allowBotSlack   : 뉴스 항목의 Slack 전송 여부 (true/false로만 입력)
+   * webhookSlack    : Slack Workspace 공간에 설정된 웹훅(Webhook URL)
+   * 
    * allowArchiving  : 뉴스 항목의 구글 시트 저장 여부 (true/false로만 입력, 기본값: true)
    * spreadsheetId   : 뉴스 항목을 저장할 구글 시트 문서 ID값
    * sheetName       : 뉴스 항목을 저장할 구글 시트 문서의 해당 시트 이름
    * sheetTargetCell : 뉴스 항목을 저장할 구글 시트 셀 영역의 좌상단 첫 번째 셀 경로 (제목행 다음줄의 첫 번째 셀)
-   * *************************************************************************/
+   * *********************************************************************************************/
 
   return values = {
+
+    // 디버그 모드 설정
     DEBUG            : false,
 
+    // 네이버 검색 오픈 API Client ID 및 Secret 값
     clientId         : "[네이버 오픈 API용 Client ID]",
     clientSecret     : "[네이버 오픈 API용 Client Secret]",
 
+    // 네이버 뉴스 검색어
     keyword          : "[검색키워드]",
-    webhook          : "https://chat.googleapis.com/v1/spaces/[SPACE_ID]/messages?key=[KEY]&token=[TOKEN]",
-    card             : true,
+
+    // Google Chat Space 전송 설정
+    allowBotGoogle   : true,
+    webhookGoogle    : "[URL]",
+
+    // Slack 전송 설정
+    allowBotSlack    : true,
+    webhookSlack     : "[URL]",
+
+    // Google Spreadsheet 아카이빙 설정
     allowArchiving   : true,
     spreadsheetId    : "[SPREADSHEET_ID]",
     sheetName        : "[SPREADSHEET_SHEET_NAME]",
     sheetTargetCell  : "[SPREADSHEET_SHEET_NAME]!A2"
+
   };
 }
 
@@ -52,13 +71,13 @@ function globalVariables() {
 
 function getFeedUrl(keyword) {
 
-  // 뉴스 검색 결과 출력 건수 지정 (미지정시 기본값 10, 최대 100)
+  // 뉴스 검색 결과 출력 건수 지정 (미지정시 기본값 10, 최대 100; 권장값 10~50)
   const display = "50";
 
-  // 뉴스 검색 시작 위치 지정 (미지정시 기본값 1, 최대 1000)
+  // 뉴스 검색 시작 위치 지정 (미지정시 기본값 1, 최대 1000; 권장값 1)
   const start = "1";
 
-  // 뉴스 검색결과 정렬 옵션 (미지정시 기본값 date(날짜순), 이외에 sim(유사도순) 지정 가능)
+  // 뉴스 검색결과 정렬 옵션 (미지정시 기본값 date(날짜순), 이외에 sim(유사도순) 지정 가능하나 비추천)
   const sort = "date";
 
   return "https://openapi.naver.com/v1/search/news.xml?query=" + keyword + "&display=" + display + "&start=" + start + "&sort=" + sort;
@@ -78,6 +97,42 @@ function getFeed(keyword, clientId, clientSecret) {
   };
 
   return UrlFetchApp.fetch(feedUrl, options);
+
+}
+
+
+function getSource(originallink) {
+
+  // source.gs에 저장된 언론사별 URL 리스트를 가져온다.
+  const list = listSource();
+
+  // 넘겨받은 주소에서 http/https 및 www 부분을 제거한다.
+  const address = originallink.replace(/^(https?:\/\/)?(www\.)?/, "");
+
+  // 넘겨받은 주소와 일치하는 언론사 URL의 인덱스를 찾아 저장한다.
+  let index = [];
+  for (let i = 0; i < list.length; i++) {
+    if (address.includes(list[i][0])) {
+      index.push(i);
+    }
+  }
+
+  // 넘겨받은 주소에 해당하는 언론사명을 리턴한다.
+  // 만약 중복되는 결과가 있다면, 더 많은 글자수가 일치하는 URL의 언론사명을 찾아 리턴한다.
+  // 탐색 결과를 찾을 수 없다면 "(알수없음)"을 리턴한다.
+  if (index.length > 1) {
+    let result = list[index[0]][1];
+    for (let j = 1; j < index.length; j++) {
+      result = list[index[j]][0].length > list[index[j - 1]][0].length ? list[index[j]][1] : result;
+    }
+    return result;
+  }
+  else if (index.length === 1) {
+    return list[index[0]][1];
+  }
+  else {
+    return "(알수없음)";
+  }
 
 }
 
@@ -106,28 +161,30 @@ function getArticle(g, feed) {
       // 각 item 별로 데이터 필드들을 가져온다.
       const title = bleachText(items[i].getChildText('title'));
       const link = items[i].getChildText('link');
+      const source = getSource(items[i].getChildText('originallink'));
       const description = bleachText(items[i].getChildText('description'));
       const pubDateText = Utilities.formatDate(pubDate, "GMT+9", "yyyy-MM-dd HH:mm:ss");
-
-      // 네이버 뉴스 검색 API에서는 매체명 데이터 필드 미지원 -> 대안 리서치 전까지는 빈 값("")으로 대체
-      const author = "";
       
       // DEBUG 모드일 경우 => 챗봇/아카이빙 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
       if (g.DEBUG) {
         Logger.log("----- " + items.length + "개 항목 중 " + (i + 1) + "번째 -----");
-        Logger.log(pubDateText + "\n" + title + "\n" + link + "\n" + description);
+        Logger.log(pubDateText + "\n" + title + "\n" + source + "\n" + link + "\n" + description);
       } 
       
       // DEBUG 모드가 아닐 경우 => 챗봇/아카이빙 기능을 실행한다.
       else {
         Logger.log("'" + title + "' 항목 게시 중...");
-        
-        postArticle(g.webhook, g.card, pubDateText, title, author, description, link);
+
+        if (g.allowBotGoogle || g.allowBotSlack) {
+          postArticle(g, pubDateText, title, source, description, link);
+        }
+
         if (g.allowArchiving) {
-          archiveItems[archiveItems.length] = [pubDateText, title, "", link, description];
+          archiveItems[archiveItems.length] = [pubDateText, title, source, link, description];
         }
       }
 
+      // PropertiesService 객체에 마지막 뉴스 업데이트 시점을 새로 업데이트한다.
       PropertiesService.getScriptProperties().setProperty('lastArticleUpdateTime', pubDate.getTime());
       cnt++;
     }
@@ -135,49 +192,38 @@ function getArticle(g, feed) {
 
   Logger.log("* 총 " + parseInt(cnt, 10) + "건의 항목이 게시되었습니다.");
 
+  // DEBUG 모드가 아니며 뉴스 항목의 구글 시트 저장이 설정되었다면, 새로 Fetching된 항목들을 시트에 전송한다.
   if (!g.DEBUG && g.allowArchiving && cnt > 0) {
     archiveArticle(g.spreadsheetId, g.sheetName, g.sheetTargetCell, archiveItems);
   }
 
 }
 
-function postArticle(webhook, card, pubDateText, title, author, description, link) {
 
-  // 구글챗 포스팅 포맷을 Card 형태로 지정했을 경우
-  if (card) {
-    const article = generateArticleCard(pubDateText, title, author, description, link);
+function postArticle(g, pubDateText, title, source, description, link) {
+
+  // Google Chat Space 전송 여부가 true이면 뉴스 항목을 포맷에 맞게 가공해서 지정된 웹훅 주소로 전송한다.
+  if (g.allowBotGoogle) {
+    const article = createArticleCardGoogle(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
       "payload": JSON.stringify(article)
     };
-
-    UrlFetchApp.fetch(webhook, params);
+    UrlFetchApp.fetch(g.webhookGoogle, params);
   }
-
-  // 구글챗 포스팅 포맷형식을 일반 텍스트 형태로 지정했을 경우
-  else {
-    let article = "*";
-    if (author != "") {
-      article += "[" + author + "] ";
-    }
-    article += title + "*";
-    article += "\n" + pubDateText;
-    if (description) {
-      article += "\n" + description;
-    }
-    article += "\n" + link;
-
+  
+  // Slack 전송 여부가 true이면 뉴스 항목을 포맷에 맞게 가공해서 지정된 웹훅 주소로 전송한다.
+  if (g.allowBotSlack) {
+    const article = createArticleCardSlack(pubDateText, title, source, description, link);
     const params = {
-      "method" : "post",
+      "method": "post",
       "contentType": "application/json",
-      "payload" : JSON.stringify({
-        "text": article 
-      })
+      "payload": JSON.stringify(article)
     };
-
-    UrlFetchApp.fetch(webhook, params);
+    UrlFetchApp.fetch(g.webhookSlack, params);
   }
+
 }
 
 
@@ -212,14 +258,14 @@ function archiveArticle(spreadsheetId, sheetName, sheetTargetCell, archiveItems)
 }
 
 
-function generateArticleCard(pubDateText, title, author, description, link) {
+function createArticleCardGoogle(pubDateText, title, source, description, link) {
   return card = { 
     cards: [{
       "header": {
         "title": title
       },
       "sections": [{
-        "header": author,
+        "header": source,
         "widgets": [{
           "textParagraph": {
             "text": description
@@ -236,7 +282,7 @@ function generateArticleCard(pubDateText, title, author, description, link) {
             },
             "button": {
               "textButton": {
-                "text": "뉴스보기",
+                "text": "기사보기",
                 "onClick": {
                   "openLink": {
                     "url": link
@@ -248,6 +294,55 @@ function generateArticleCard(pubDateText, title, author, description, link) {
         }]
       }]
     }]
+  }
+}
+
+
+function createArticleCardSlack(pubDateText, title, source, description, link) {
+  return card = {
+    "blocks": [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "*" + title + "*"
+        }
+      },
+      {
+        "type": "context",
+        "elements": [
+          {
+            "type": "mrkdwn",
+            "text": "*" + source + "* | " + pubDateText
+          }
+        ]
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "plain_text",
+          "text": description
+        }
+      },
+      {
+        "type": "actions",
+        "elements": [
+          {
+            "type": "button",
+            "text": {
+              "type": "plain_text",
+              "text": "기사보기"
+            },
+            "value": "기사보기",
+            "url": link,
+            "action_id": "button-action"
+          }
+        ]
+      },
+      {
+        "type": "divider"
+      }
+    ]
   }
 }
 
@@ -277,8 +372,16 @@ function runFetchingBot() {
     return;
   }
   
-  // 뉴스봇 구동 설정값들을 불러와 네이버 뉴스 피드를 체크한다.
+  // 뉴스봇 구동 설정값들을 불러온다. 
   const g = globalVariables();
+
+  // 뉴스봇 및 아카이빙 기능이 모두 false로 설정된 경우 에러 로그와 함께 실행을 종료한다.
+  if (!g.allowArchiving && !g.allowBotGoogle && !g.allowBotSlack) {
+    Logger.log("* 뉴스봇 및 아카이빙 기능이 모두 false로 설정되어 있습니다. 설정값들을 다시 확인해주세요.\n");
+    return;
+  }
+
+  // 네이버 뉴스 피드를 체크한다.
   const feed = getFeed(g.keyword, g.clientId, g.clientSecret);
 
   // 피드의 응답 코드가 정상(200)이라면 뉴스봇 기능을 구동한다.
@@ -291,6 +394,7 @@ function runFetchingBot() {
     Logger.log("* 뉴스를 가져오는 과정에서 에러가 발생했습니다. 로그를 참고해주세요.\n");
     Logger.log(feed.getHeaders());
     Logger.log(feed.getContentText());
+    return;
   }
 
 }
