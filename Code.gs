@@ -3,12 +3,12 @@
  * ***********************************************************************************************
  * 특정 검색어의 네이버 뉴스피드를 구글챗(Google Chat Space) 또는 슬랙(Slack)으로 중계합니다.
  * Google Apps Script와 네이버 검색 오픈 API를 이용합니다.
- * 
+ *
  * - Github : https://github.com/seongjinme/naver-news-fetching-bot
  * - 문의사항 : mail@seongjin.me
  * ***********************************************************************************************/
 
-function globalVariables() { 
+function globalVariables() {
 
   /***********************************************************************************************
    * 뉴스봇 구동에 필요한 설정값들입니다. 아래 설명을 참고하시어 입력해주세요.
@@ -18,18 +18,18 @@ function globalVariables() {
    * - 마지막 항목 외에는 모든 설정값 끝에 쉼표(,)가 반드시 필요합니다.
    * *********************************************************************************************
    * DEBUG           : 디버그 모드 ON/OFF (true/false로만 입력, 기본값: false)
-   * 
+   *
    * clientId        : 네이버 검색 오픈 API 접근 가능한 Client ID 값
    * clientSecret    : 네이버 검색 오픈 API 접근 가능한 Client Secret 값
-   * 
+   *
    * keyword         : 모니터링할 네이버 뉴스 검색어
-   * 
+   *
    * allowBotGoogle  : 뉴스 항목의 Google Chat Space 전송 여부 (true/false로만 입력)
    * webhookGoogle   : Google Chat Space 공간에 설정된 웹훅(Webhook) URL
-   * 
+   *
    * allowBotSlack   : 뉴스 항목의 Slack 전송 여부 (true/false로만 입력)
    * webhookSlack    : Slack Workspace 공간에 설정된 웹훅(Webhook URL)
-   * 
+   *
    * allowArchiving  : 뉴스 항목의 구글 시트 저장 여부 (true/false로만 입력, 기본값: true)
    * spreadsheetId   : 뉴스 항목을 저장할 구글 시트 문서 ID값
    * sheetName       : 뉴스 항목을 저장할 구글 시트 문서의 해당 시트 이름
@@ -106,33 +106,76 @@ function getSource(originallink) {
   // source.gs에 저장된 언론사별 URL 리스트를 가져온다.
   const list = listSource();
 
-  // 넘겨받은 주소에서 http/https 및 www 부분을 제거한다.
-  const address = originallink.replace(/^(https?:\/\/)?(www\.)?/, "");
+  // 넘겨받은 뉴스 원문 주소에서 불필요한 부분을 제거한다.
+  const address = originallink.toLowerCase().replace(/^(https?:\/?\/?)?(\/?\/?www\.)?(\/?\/?news\.)?(\/?\/?view\.)?/, "");
 
-  // 넘겨받은 주소와 일치하는 언론사 URL의 인덱스를 찾아 저장한다.
-  let index = [];
-  for (let i = 0; i < list.length; i++) {
-    if (address.includes(list[i][0])) {
-      index.push(i);
-    }
-  }
-
-  // 넘겨받은 주소에 해당하는 언론사명을 리턴한다.
-  // 만약 중복되는 결과가 있다면, 더 많은 글자수가 일치하는 URL의 언론사명을 찾아 리턴한다.
-  // 탐색 결과를 찾을 수 없다면 "(알수없음)"을 리턴한다.
-  if (index.length > 1) {
-    let result = list[index[0]][1];
-    for (let j = 1; j < index.length; j++) {
-      result = list[index[j]][0].length > list[index[j - 1]][0].length ? list[index[j]][1] : result;
-    }
-    return result;
-  }
-  else if (index.length === 1) {
-    return list[index[0]][1];
+  // 원문 주소에 맞는 매체명을 탐색하여 리턴한다. 탐색 결과가 없을 경우 "(알수없음)"을 리턴한다.
+  const index = searchSourceIndex(address, list);
+  if (index >= 0 && index <= list.length - 1) {
+    return list[index][1];
   }
   else {
     return "(알수없음)";
   }
+
+}
+
+
+function searchSourceIndex(address, list) {
+
+  let left = 0;
+  let right = list.length - 1;
+  
+  while (left <= right) {
+
+    let index = Math.floor((left + right) / 2);
+    let address_stripped = address.substr(0, list[index][0].length);
+
+    if (address_stripped === list[index][0]) {
+      return checkSourceIndex(index, list, address, address_stripped);
+    }
+    else if (address_stripped < list[index][0]) {
+      right = index - 1;
+    }
+    else {
+      left = index + 1;
+    }
+
+  }
+
+  return -1;
+
+}
+
+
+function checkSourceIndex(index, list, address, address_stripped) {
+
+  let i = index;
+
+  // addressSearch()에서 확인된 매체명 경로를 포함하는 하위 경로가 추가로 존재하는지 체크한다.
+  while (true) {
+    if (list[i + 1][0].includes(address_stripped)) {
+      i++;
+    }
+    else {
+      break;
+    }
+  }
+
+  // 추가 하위 경로가 없다면 원래의 매체명 index값을 리턴한다.
+  if (i === index) {
+    return index;
+  }
+
+  // 만약 있다면, 해당되는 범위의 우측 끝에 위치한 매체명부터 차례로 체크한 뒤 조건에 맞는 매체명 index값을 리턴한다.
+  while (i >= index) {
+    if (address.includes(list[i][0])) {
+      return i;
+    }
+    i--;
+  }
+
+  return -1;
 
 }
 
@@ -164,13 +207,13 @@ function getArticle(g, feed) {
       const source = getSource(items[i].getChildText('originallink'));
       const description = bleachText(items[i].getChildText('description'));
       const pubDateText = Utilities.formatDate(pubDate, "GMT+9", "yyyy-MM-dd HH:mm:ss");
-      
+
       // DEBUG 모드일 경우 => 챗봇/아카이빙 기능을 정지하고 처리된 데이터를 로그로만 출력시킨다.
       if (g.DEBUG) {
         Logger.log("----- " + items.length + "개 항목 중 " + (i + 1) + "번째 -----");
         Logger.log(pubDateText + "\n" + title + "\n" + source + "\n" + link + "\n" + description);
-      } 
-      
+      }
+
       // DEBUG 모드가 아닐 경우 => 챗봇/아카이빙 기능을 실행한다.
       else {
         Logger.log("'" + title + "' 항목 게시 중...");
@@ -212,7 +255,7 @@ function postArticle(g, pubDateText, title, source, description, link) {
     };
     UrlFetchApp.fetch(g.webhookGoogle, params);
   }
-  
+
   // Slack 전송 여부가 true이면 뉴스 항목을 포맷에 맞게 가공해서 지정된 웹훅 주소로 전송한다.
   if (g.allowBotSlack) {
     const article = createArticleCardSlack(pubDateText, title, source, description, link);
@@ -259,7 +302,7 @@ function archiveArticle(spreadsheetId, sheetName, sheetTargetCell, archiveItems)
 
 
 function createArticleCardGoogle(pubDateText, title, source, description, link) {
-  return card = { 
+  return card = {
     cards: [{
       "header": {
         "title": title
@@ -271,7 +314,7 @@ function createArticleCardGoogle(pubDateText, title, source, description, link) 
             "text": description
           }
         },
-        {  
+        {
           "keyValue": {
             "content": pubDateText,
             "icon": "DESCRIPTION",
@@ -371,8 +414,8 @@ function runFetchingBot() {
     Logger.log("* 초기 설정이 완료되었습니다. 다음 실행때부터 뉴스 항목을 가져옵니다.")
     return;
   }
-  
-  // 뉴스봇 구동 설정값들을 불러온다. 
+
+  // 뉴스봇 구동 설정값들을 불러온다.
   const g = globalVariables();
 
   // 뉴스봇 및 아카이빙 기능이 모두 false로 설정된 경우 에러 로그와 함께 실행을 종료한다.
