@@ -1,7 +1,8 @@
 /*************************************************************************************************
- * Naver News Fetching Bot (v2.1)
+ * Naver News Fetching Bot (v2.2)
  * ***********************************************************************************************
- * 특정 검색어의 네이버 뉴스피드를 구글챗(Google Chat Space) 또는 슬랙(Slack)으로 중계합니다.
+ * 원하는 검색어가 포함된 최신 네이버 뉴스를 업무용 채팅 솔루션으로 전송합니다.
+ * 슬랙(Slack), 팀즈(Microsoft Teams), 잔디(JANDI), 구글챗(Google Chat Space)을 지원합니다.
  * Google Apps Script와 네이버 검색 오픈 API를 이용합니다.
  *
  * - Github : https://github.com/seongjinme/naver-news-fetching-bot
@@ -13,8 +14,8 @@ function globalVariables() {
   /***********************************************************************************************
    * 뉴스봇 구동에 필요한 설정값들입니다. 아래 설명을 참고하시어 입력해주세요.
    * *********************************************************************************************
-   * - allowBotGoogle, allowBotSlack, allowArchiving 중 하나 이상은 반드시 true로 설정되어야 합니다.
-   * - true/false로만 입력하는 경우 외엔 설정값 앞뒤로 쌍따옴표("")가 반드시 필요합니다.
+   * - "allow" 접두어가 붙은 옵션 중 최소 하나 이상은 true로 설정되어야 합니다.
+   * - true/false로만 입력하는 경우가 아니면, 설정값 앞뒤로 쌍따옴표("")가 반드시 필요합니다.
    * - 마지막 항목 외에는 모든 설정값 끝에 쉼표(,)가 반드시 필요합니다.
    * *********************************************************************************************
    * DEBUG           : 디버그 모드 ON/OFF (true/false로만 입력, 기본값: false)
@@ -24,11 +25,17 @@ function globalVariables() {
    *
    * keyword         : 모니터링할 네이버 뉴스 검색어
    *
-   * allowBotGoogle  : 뉴스 항목의 Google Chat Space 전송 여부 (true/false로만 입력)
-   * webhookGoogle   : Google Chat Space 공간에 설정된 웹훅(Webhook) URL
-   *
    * allowBotSlack   : 뉴스 항목의 Slack 전송 여부 (true/false로만 입력)
    * webhookSlack    : Slack Workspace 공간에 설정된 웹훅(Webhook URL)
+   *
+   * allowBotTeams   : 뉴스 항목의 Slack 전송 여부 (true/false로만 입력)
+   * webhookTeams    : Slack Workspace 공간에 설정된 웹훅(Webhook URL)
+   *
+   * allowBotJandi   : 뉴스 항목의 Slack 전송 여부 (true/false로만 입력)
+   * webhookJandi    : Slack Workspace 공간에 설정된 웹훅(Webhook URL)
+   *
+   * allowBotGoogle  : 뉴스 항목의 Google Chat Space 전송 여부 (true/false로만 입력)
+   * webhookGoogle   : Google Chat Space 공간에 설정된 웹훅(Webhook) URL
    *
    * allowArchiving  : 뉴스 항목의 구글 시트 저장 여부 (true/false로만 입력, 기본값: true)
    * spreadsheetId   : 뉴스 항목을 저장할 구글 시트 문서 ID값
@@ -48,16 +55,24 @@ function globalVariables() {
     // 네이버 뉴스 검색어
     keyword          : "[검색키워드]",
 
-    // Google Chat Space 전송 설정
-    allowBotGoogle   : true,
-    webhookGoogle    : "[URL]",
-
     // Slack 전송 설정
-    allowBotSlack    : true,
+    allowBotSlack    : false,
     webhookSlack     : "[URL]",
 
+    // Microsoft Teams 전송 설정
+    allowBotTeams    : false,
+    webhookTeams     : "[URL]",
+
+    // JANDI 전송 설정
+    allowBotJandi    : false,
+    webhookJandi     : "[URL]",
+
+    // Google Chat Space 전송 설정
+    allowBotGoogle   : false,
+    webhookGoogle    : "[URL]",
+
     // Google Spreadsheet 아카이빙 설정
-    allowArchiving   : true,
+    allowArchiving   : false,
     spreadsheetId    : "[SPREADSHEET_ID]",
     sheetName        : "[SPREADSHEET_SHEET_NAME]",
     sheetTargetCell  : "[SPREADSHEET_SHEET_NAME]!A2"
@@ -218,7 +233,7 @@ function getArticle(g, feed) {
       else {
         Logger.log("'" + title + "' 항목 게시 중...");
 
-        if (g.allowBotGoogle || g.allowBotSlack) {
+        if (g.allowBotSlack || g.allowBotTeams || g.allowBotJandi || g.allowBotGoogle) {
           postArticle(g, pubDateText, title, source, description, link);
         }
 
@@ -230,7 +245,9 @@ function getArticle(g, feed) {
       // PropertiesService 객체에 마지막 뉴스 업데이트 시점을 새로 업데이트한다.
       PropertiesService.getScriptProperties().setProperty('lastArticleUpdateTime', pubDate.getTime());
       cnt++;
+
     }
+
   }
 
   Logger.log("* 총 " + parseInt(cnt, 10) + "건의 항목이 게시되었습니다.");
@@ -243,9 +260,46 @@ function getArticle(g, feed) {
 }
 
 
-function postArticle(g, pubDateText, title, source, description, link) {
+async function postArticle(g, pubDateText, title, source, description, link) {
 
-  // Google Chat Space 전송 여부가 true이면 뉴스 항목을 포맷에 맞게 가공해서 지정된 웹훅 주소로 전송한다.
+  // 채팅 서비스별 초당/분당 request 횟수 제한을 고려하여 sleep 기능을 정의한다.
+  // Source : https://stackoverflow.com/a/39914235
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  if (g.allowBotSlack) {
+    const article = createArticleCardSlack(pubDateText, title, source, description, link);
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(article)
+    };
+    UrlFetchApp.fetch(g.webhookSlack, params);
+  }
+
+  if (g.allowBotTeams) {
+    const article = createArticleCardTeams(pubDateText, title, source, description, link);
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(article)
+    };
+    UrlFetchApp.fetch(g.webhookTeams, params);
+  }
+
+  if (g.allowBotJandi) {
+    const article = createArticleCardJandi(pubDateText, title, source, description, link);
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "header": {
+        "Accept": "application/vnd.tosslab.jandi-v2+json"
+      },
+      "payload": JSON.stringify(article)
+    };
+    UrlFetchApp.fetch(g.webhookJandi, params);
+    // Logger.Log(UrlFetchApp.getRequest())
+  }
+
   if (g.allowBotGoogle) {
     const article = createArticleCardGoogle(pubDateText, title, source, description, link);
     const params = {
@@ -256,16 +310,8 @@ function postArticle(g, pubDateText, title, source, description, link) {
     UrlFetchApp.fetch(g.webhookGoogle, params);
   }
 
-  // Slack 전송 여부가 true이면 뉴스 항목을 포맷에 맞게 가공해서 지정된 웹훅 주소로 전송한다.
-  if (g.allowBotSlack) {
-    const article = createArticleCardSlack(pubDateText, title, source, description, link);
-    const params = {
-      "method": "post",
-      "contentType": "application/json",
-      "payload": JSON.stringify(article)
-    };
-    UrlFetchApp.fetch(g.webhookSlack, params);
-  }
+  // 채팅 솔루션별 초당/분당 request 횟수 제한을 고려하여 다음 항목 처리 전에 일정 시간 대기시킨다.
+  await sleep(200);
 
 }
 
