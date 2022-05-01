@@ -125,7 +125,7 @@ function searchSourceIndex(address, list) {
 
   let left = 0;
   let right = list.length - 1;
-  
+
   while (left <= right) {
 
     let index = Math.floor((left + right) / 2);
@@ -298,95 +298,6 @@ function archiveArticle(spreadsheetId, sheetName, sheetTargetCell, archiveItems)
     valueInputOption: 'USER_ENTERED'
   });
 
-}
-
-
-function createArticleCardGoogle(pubDateText, title, source, description, link) {
-  return card = {
-    cards: [{
-      "header": {
-        "title": title
-      },
-      "sections": [{
-        "header": source,
-        "widgets": [{
-          "textParagraph": {
-            "text": description
-          }
-        },
-        {
-          "keyValue": {
-            "content": pubDateText,
-            "icon": "DESCRIPTION",
-            "onClick": {
-              "openLink": {
-                "url": link
-              }
-            },
-            "button": {
-              "textButton": {
-                "text": "기사보기",
-                "onClick": {
-                  "openLink": {
-                    "url": link
-                  }
-                }
-              }
-            }
-          }
-        }]
-      }]
-    }]
-  }
-}
-
-
-function createArticleCardSlack(pubDateText, title, source, description, link) {
-  return card = {
-    "blocks": [
-      {
-        "type": "section",
-        "text": {
-          "type": "mrkdwn",
-          "text": "*" + title + "*"
-        }
-      },
-      {
-        "type": "context",
-        "elements": [
-          {
-            "type": "mrkdwn",
-            "text": "*" + source + "* | " + pubDateText
-          }
-        ]
-      },
-      {
-        "type": "section",
-        "text": {
-          "type": "plain_text",
-          "text": description
-        }
-      },
-      {
-        "type": "actions",
-        "elements": [
-          {
-            "type": "button",
-            "text": {
-              "type": "plain_text",
-              "text": "기사보기"
-            },
-            "value": "기사보기",
-            "url": link,
-            "action_id": "button-action"
-          }
-        ]
-      },
-      {
-        "type": "divider"
-      }
-    ]
-  }
 }
 
 
