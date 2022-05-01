@@ -366,9 +366,8 @@ function bleachText(text) {
 function runFetchingBot() {
 
   // 뉴스봇을 처음 실행하는 경우, PropertiesService 객체를 통해 최초 실행 시각과 뉴스봇 구동 여부를 저장 후 종료시킨다.
-  if (!PropertiesService.getScriptProperties().getProperty("getArticleInitialized")) {
-    PropertiesService.getScriptProperties().setProperty("lastArticleUpdateTime", parseFloat(Date.now()));
-    PropertiesService.getScriptProperties().setProperty("getArticleInitialized", true);
+  if (!PropertiesService.getScriptProperties().getProperty("lastArticleUpdateTime")) {
+    PropertiesService.getScriptProperties().setProperty("lastArticleUpdateTime", Date.now());
     Logger.log("* 초기 설정이 완료되었습니다. 다음 실행때부터 뉴스 항목을 가져옵니다.")
     return;
   }
@@ -377,7 +376,7 @@ function runFetchingBot() {
   const g = globalVariables();
 
   // 뉴스봇 및 아카이빙 기능이 모두 false로 설정된 경우 에러 로그와 함께 실행을 종료한다.
-  if (!g.allowArchiving && !g.allowBotGoogle && !g.allowBotSlack) {
+  if (!g.allowArchiving && !g.allowBotSlack && !g.allowBotTeams && !g.allowBotJandi && !g.allowBotGoogle) {
     Logger.log("* 뉴스봇 및 아카이빙 기능이 모두 false로 설정되어 있습니다. 설정값들을 다시 확인해주세요.\n");
     return;
   }
