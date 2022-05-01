@@ -356,6 +356,7 @@ function bleachText(text) {
   text = text.replace(/&lt;/gi, '<');
   text = text.replace(/&gt;/gi, '>');
   text = text.replace(/&amp;/gi, '&');
+  text = text.replace(/`/gi, "'");
 
   return text;
 
