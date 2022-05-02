@@ -32,10 +32,10 @@
 
 뉴스를 받아보실 채팅 플랫폼에서 이용할 Incoming Webhook을 생성하신 뒤 해당 URL을 `Code.gs`의 `globalVariables()`에 위치한 설정값에 붙여넣으셔야 합니다. 플랫폼별 상세 방법은 아래 링크를 통해 확인해주세요.
 
-* 슬랙(Slack)
-* 팀즈(Microsoft Teams)
-* 잔디(JANDI)
-* 구글챗(Google Chat)
+* [슬랙(Slack)](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/GUIDE_WEBHOOK.md#%EC%8A%AC%EB%9E%99slack)
+* [팀즈(Microsoft Teams)](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/GUIDE_WEBHOOK.md#%ED%8C%80%EC%A6%88microsoft-teams)
+* [잔디(JANDI)](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/GUIDE_WEBHOOK.md#%EC%9E%94%EB%94%94jandi)
+* [구글챗(Google Chat)](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/GUIDE_WEBHOOK.md#%EA%B5%AC%EA%B8%80%EC%B1%97google-chat)
 
 ### 2. 네이버 개발자 센터에서 API용 Client ID, Secret 생성
 
