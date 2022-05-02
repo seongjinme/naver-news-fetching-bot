@@ -37,19 +37,6 @@
 * 잔디(JANDI)
 * 구글챗(Google Chat)
 
-#### 1-1. Google Chat
-1. 봇을 추가할 Google Chat 대화방(Space)에 PC로 접속한 뒤 아래 사진과 같이 “웹훅 보기”를 선택합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/manage_webhook.png" alt="Manage webhooks in Google Chat"></p>
-2. 새로 추가할 Webhook의 이름과 프로필 사진 URL(선택사항)을 입력합니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_webhook.png" width="500" alt="Add new webhook in Google Chat"></p>
-3. 새로 생성된 Webhook의 URL을 복사하여 `Code.gs`의 설정값에 붙여넣습니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/add_webhook_result.png" width="500" alt="Copy URL of new webhook in Google Chat"></p>
-
-#### 1-2. Slack
-[Slack용 수신 웹후크 - Slack Help Center](https://slack.com/intl/ko-kr/help/articles/115005265063-Slack%EC%9A%A9-%EC%88%98%EC%8B%A0-%EC%9B%B9%ED%9B%84%ED%81%AC) 문서를 참고하여 진행해주세요.
-
-1. Slack에 로그인하신 상태에서 [새 Slack 앱을 생성](https://api.slack.com/apps?new_app=1)합니다. Create an app 팝업에서 `From scratch`를 선택하신 뒤, 원하시는 봇 이름과 뉴스를 전송할 워크스페이스를 선택하고 `Create App` 버튼을 누릅니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/slack_app_create.png" width="500" alt="Create new app in Slack Workspace"></p>
-2. 앱 생성 완료 후 나타나는 Basic Information 화면에서 `Add features and functionality`를 누르면 나타나는 `Incoming Webhooks`를 선택한 뒤 `Activate Incoming Webhooks` 토글을 켜서 `On`으로 만듭니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/slack_webhook_toggle.png" width="500" alt="Activate incoming webhook"></p>
-3. 같은 화면 하단의 `Add New Webhook to Workspace` 버튼을 누른 뒤, 뉴스를 전송할 Slack 채널 또는 사용자를 지정하고 `허용(Allow)` 버튼을 누릅니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/slack_webhook_create.png" width="500" alt="Add new webhook in Slack workspace"></p>
-4. 다시 돌아온 화면의 하단에 표시된 `Webhook URL`을 복사하여 `Code.gs`의 설정값에 붙여넣습니다.
-
 ### 2. 네이버 개발자 센터에서 API용 Client ID, Secret 생성
 
 1. [네이버측 공식 가이드 문서](https://developers.naver.com/docs/common/openapiguide/appregister.md)를 참고하여 [이 페이지](https://developers.naver.com/apps/#/wizard/register)에서 애플리케이션 등록 절차를 진행합니다.
