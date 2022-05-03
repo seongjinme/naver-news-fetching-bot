@@ -28,7 +28,7 @@
 * 매체명 데이터(`source.gs`)가 업데이트 되었습니다. 2022년 5월 기준 총 731개의 매체 정보가 포함되었습니다.
 * 매체명 탐색 속도가 개선되었습니다.
 
-보다 자세한 업데이트 내용은 [/CHANGELOG.md](https://github.com/seongjinme/naver-news-fetching-bot/CHANGELOG.md)에서 확인하실 수 있습니다.
+보다 자세한 업데이트 내용은 [/CHANGELOG.md](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/CHANGELOG.md)에서 확인하실 수 있습니다.
 
 ## Installation
 ### 1. Webhook 생성
