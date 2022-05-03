@@ -168,7 +168,7 @@ function checkSourceIndex(index, list, address, address_stripped) {
   let i = index;
 
   // addressSearch()에서 확인된 매체명 경로를 포함하는 하위 경로가 추가로 존재하는지 체크한다.
-  while (true) {
+  while (i + 1 <= list.length - 1) {
     if (list[i + 1][0].includes(address_stripped)) {
       i++;
     }
