@@ -20,10 +20,13 @@
 <img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/screenshot_mobile.jpg" alt="Screenshot (Mobile)">
 
 ## Update Notes
+### Ver 2.2.1 (2022-05-03)
+* 매체명 데이터(source.gs)에 수록된 마지막 항목의 매체명을 탐색할 때 발생하는 오류를 바로잡았습니다.
+
 ### Ver 2.2.0 (2022-05-02)
 * **마이크로소프트 팀즈(Microsoft Teams), 잔디(JANDI) 지원이 추가되었습니다.**
 * 매체명 데이터(`source.gs`)가 업데이트 되었습니다. 2022년 5월 기준 총 731개의 매체 정보가 포함되었습니다.
-* 매체명 탐색 속도가 개선되었습니다.
+* 매체명 탐색 속도가 개선되었습니다.
 
 보다 자세한 업데이트 내용은 [/CHANGELOG.md](https://github.com/seongjinme/naver-news-fetching-bot/CHANGELOG.md)에서 확인하실 수 있습니다.
 
