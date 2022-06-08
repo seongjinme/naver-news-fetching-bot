@@ -46,7 +46,7 @@
 2. [애플리케이션 등록 세부 정보 입력 단계](https://developers.naver.com/docs/common/openapiguide/appregister.md#%EC%95%A0%ED%94%8C%EB%A6%AC%EC%BC%80%EC%9D%B4%EC%85%98-%EB%93%B1%EB%A1%9D-%EC%84%B8%EB%B6%80-%EC%A0%95%EB%B3%B4)에서 다음과 같이 입력합니다.
 - `애플리케이션 이름` : 임의로 입력합니다.
 - `사용 API` : `검색`을 선택합니다.
-- `비로그인 오픈 API 서비스 환경` : `WEB 설정`을 선택한 뒤 "웹 서비스 URL" 항목에 `naver.com`을 입력합니다.
+- `비로그인 오픈 API 서비스 환경` : `WEB 설정`을 선택한 뒤 "웹 서비스 URL" 항목에 `https://naver.com`을 입력합니다.
 3. 애플리케이션 등록이 완료되면, [해당 애플리케이션 정보 화면](https://developers.naver.com/docs/common/openapiguide/appregister.md#%EC%95%A0%ED%94%8C%EB%A6%AC%EC%BC%80%EC%9D%B4%EC%85%98-%EB%93%B1%EB%A1%9D-%ED%99%95%EC%9D%B8)에 나타나는 Client ID와 Secret값을 복사하여 `Code.gs`의 설정값에 붙여넣습니다.
 
 ### 3. Google Apps Script에서 스크립트 삽입 및 API 추가
