@@ -3,13 +3,12 @@
  * ***********************************************************************************************
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 데이터는 반드시 URL 주소 기준으로 오름차순 정렬되어 있어야 하는 점에 유의해주세요.
- *
- * - 마지막 업데이트 : 2022년 5월 1일
+ * 
+ * - 마지막 업데이트 : 2022년 8월 24일
  * ***********************************************************************************************/
 
 function listSource() {
   return list = [
-    ["00news.co.kr","공공뉴스"],
     ["100ssd.co.kr","백세시대"],
     ["4th.kr","포쓰저널"],
     ["ablenews.co.kr","에이블뉴스"],
@@ -143,6 +142,7 @@ function listSource() {
     ["ditoday.com","디아이투데이"],
     ["dizzotv.com","디지틀조선TV"],
     ["dkilbo.com","대경일보"],
+    ["dnews.co.kr","e대한경제"],
     ["docdocdoc.co.kr","청년의사"],
     ["doctorstimes.com","의사신문"],
     ["domin.co.kr","전북도민일보"],
@@ -160,6 +160,7 @@ function listSource() {
     ["ebn.co.kr","EBN"],
     ["ebs.co.kr","EBS"],
     ["ebuzz.co.kr","넥스트데일리"],
+    ["economist.co.kr","이코노미스트"],
     ["economychosun.com","이코노미조선"],
     ["economytalk.kr","이코노미톡뉴스"],
     ["econonews.co.kr","이코노뉴스"],
@@ -240,6 +241,7 @@ function listSource() {
     ["golfguide.co.kr","지이코노미"],
     ["golfhankook.com","골프한국"],
     ["golfjournal.co.kr","골프저널"],
+    ["goodkyung.com","굿모닝경제"],
     ["goodmorningcc.com","굿모닝충청"],
     ["goodnews1.com","데일리굿뉴스"],
     ["gosiweek.com","공무원수험신문"],
@@ -477,6 +479,7 @@ function listSource() {
     ["mpmbc.co.kr","목포MBC"],
     ["mstoday.co.kr","MS투데이"],
     ["mt.co.kr","머니투데이"],
+    ["mtn.co.kr","MTN"],
     ["mtn.mt.co.kr","MTN"],
     ["mtnews.net","기계신문"],
     ["munhaknews.com","문학뉴스"],
@@ -518,6 +521,7 @@ function listSource() {
     ["newsprime.co.kr","프라임경제"],
     ["newsquest.co.kr","뉴스퀘스트"],
     ["newstnt.com","뉴스티앤티"],
+    ["newstomato.com","뉴스토마토"],
     ["newswatch.kr","뉴스워치"],
     ["newsway.kr","뉴스웨이"],
     ["newswhoplus.com","뉴스후플러스"],
@@ -703,6 +707,7 @@ function listSource() {
     ["weeklytoday.com","위클리오늘"],
     ["weeklytrade.co.kr","한국무역신문"],
     ["welfarenews.net","장애인신문"],
+    ["wemakenews.co.kr","위메이크뉴스"],
     ["wflower.info","우먼스플라워"],
     ["whitepaper.co.kr","화이트페이퍼"],
     ["whosaeng.com","후생신보"],
