@@ -320,6 +320,48 @@ async function postArticle(g, pubDateText, title, source, description, link) {
 }
 
 
+function postMessage(g, message) {
+  if (g.allowBotSlack) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(createMessageSlack(message))
+    };
+    UrlFetchApp.fetch(g.webhookSlack, params);
+  }
+
+  if (g.allowBotTeams) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(createMessageTeams(message))
+    };
+    UrlFetchApp.fetch(g.webhookTeams, params);
+  }
+
+  if (g.allowBotJandi) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "header": {
+        "Accept": "application/vnd.tosslab.jandi-v2+json"
+      },
+      "payload": JSON.stringify(createMessageJandi(message))
+    };
+    UrlFetchApp.fetch(g.webhookJandi, params);
+  }
+
+  if (g.allowBotGoogle) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(createMessageGoogle(message))
+    };
+    UrlFetchApp.fetch(g.webhookGoogle, params);
+  }
+}
+
+
 function archiveArticle(spreadsheetId, sheetName, sheetTargetCell, archiveItems) {
 
   const ss = SpreadsheetApp.openById(spreadsheetId);
