@@ -5,7 +5,10 @@
  * 상세 레이아웃 설정 방법은 각 메신저별 개발자 문서를 참고해주세요.
  * ***********************************************************************************************/
 
-// 슬랙(Slack)용 레이아웃
+/*************************************************************************************************
+ * 슬랙(Slack)용 뉴스 카드 및 메시지 레이아웃
+ * ***********************************************************************************************/
+
 function createArticleCardSlack(pubDateText, title, source, description, link) {
   return card = {
     "text": "[" + source + "] " + title,
@@ -54,7 +57,29 @@ function createArticleCardSlack(pubDateText, title, source, description, link) {
   }
 }
 
-// 팀즈(Microsoft Teams)용 레이아웃
+function createMessageSlack(message) {
+  return text = {
+    "text": message,
+    "blocks": [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": message
+        }
+      },
+      {
+        "type": "divider"
+      }
+    ]
+  }
+}
+
+
+/*************************************************************************************************
+ * 팀즈(Microsoft Teams)용 뉴스 카드 및 메시지 레이아웃
+ * ***********************************************************************************************/
+
 function createArticleCardTeams(pubDateText, title, source, description, link) {
   return card = {
     "type": "message",
@@ -120,16 +145,55 @@ function createArticleCardTeams(pubDateText, title, source, description, link) {
   }
 }
 
-// 잔디(JANDI)용 레이아웃
+function createMessageTeams(message) {
+  return text = {
+    "type": "message",
+    "summary": message,
+    "attachments": [
+      {
+        "contentType": "application/vnd.microsoft.card.adaptive",
+        "contentUrl": null,
+        "content": {
+          "type": "AdaptiveCard",
+          "body": [
+            {
+              "type": "TextBlock",
+              "wrap": true,
+              "text": message
+            }
+          ],
+          "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+          "version": "1.4"
+        }
+      }
+    ]
+  }
+}
+
+
+/*************************************************************************************************
+ * 잔디(JANDI)용 뉴스 카드 및 메시지 레이아웃
+ * ***********************************************************************************************/
+
 function createArticleCardJandi(pubDateText, title, source, description, link) {
   return card = {
     "body": "[" + title + "](" + link + ")\n" + source + " | " + pubDateText + "\n\n" + description
   }
 }
 
-// 구글챗(Google Chat)용 레이아웃
+function createMessageJandi(message) {
+  return text = {
+    "body": message
+  }
+}
+
+
+/*************************************************************************************************
+ * 구글챗(Google Chat)용 뉴스 카드 및 메시지 레이아웃
+ * ***********************************************************************************************/
+
 function createArticleCardGoogle(pubDateText, title, source, description, link) {
-  return card = {
+  return card = { 
     "fallbackText": "[" + source + "] " + title,
     "cards": [
       {
@@ -145,7 +209,7 @@ function createArticleCardGoogle(pubDateText, title, source, description, link) 
             "text": description
           }
         },
-        {
+        {  
           "keyValue": {
             "content": pubDateText,
             "icon": "DESCRIPTION",
@@ -169,4 +233,28 @@ function createArticleCardGoogle(pubDateText, title, source, description, link) 
       }]
     }]
   }
+}
+
+function createMessageGoogle(message) {
+  return text = {
+    "text": message
+  }
+}
+
+
+/*************************************************************************************************
+ * 초기 설정 완료시 안내 메시지
+ * ***********************************************************************************************/
+
+function welcomeMessage(keyword) {
+  return text = "[Naver News Fetching Bot 설치 완료]\n\n네이버 뉴스 봇이 설치되었습니다. 앞으로 \'" + keyword + "\' 키워드에 대한 최신 뉴스가 아래와 같이 주기적으로 전송됩니다.";
+}
+
+
+/*************************************************************************************************
+ * 검색 키워드 변경시 안내 메시지
+ * ***********************************************************************************************/
+
+function changeKeywordMessage(before, after) {
+  return text = "[Naver News Fetching Bot 키워드 변경 완료]\n\n네이버 뉴스 봇의 검색 키워드가 \'" + before + "\'에서 \'" + after + "\'로 변경 완료되었습니다. 앞으로 \'" + after + "\' 키워드에 대한 최신 뉴스가 전송됩니다.";
 }
