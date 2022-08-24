@@ -410,6 +410,34 @@ function bleachText(text) {
 }
 
 
+function getLastArticleUpdateTime() {
+  // PropertiesService 객체에 lastArticleUpdateTime 속성값이 있다면 이에 대응하는 Date 객체를 리턴시킨다.
+  if (PropertiesService.getScriptProperties().getProperty("lastArticleUpdateTime")) {
+    return new Date(parseFloat(PropertiesService.getScriptProperties().getProperty("lastArticleUpdateTime")));
+  }
+}
+
+
+function getRegisteredKeyword() {
+  // PropertiesService 객체에 registeredKeyword 속성값으로부터 기존에 설정된 검색 키워드를 체크한다.
+  if (PropertiesService.getScriptProperties().getProperty("registeredKeyword")) {
+    return PropertiesService.getScriptProperties().getProperty("registeredKeyword");
+  }
+}
+
+
+function setLastArticleUpdateTime(time) {
+  // PropertiesService 객체의 lastArticleUpdateTime 속성값으로 time값을 입력한다.
+  PropertiesService.getScriptProperties().setProperty('lastArticleUpdateTime', time);
+}
+
+
+function setRegisteredKeyword(keyword) {
+  // PropertiesService 객체의 registeredKeyword 속성값으로 keyword값을 입력한다.
+  PropertiesService.getScriptProperties().setProperty('registeredKeyword', keyword);
+}
+
+
 function runFetchingBot() {
 
   // 뉴스봇을 처음 실행하는 경우, PropertiesService 객체를 통해 최초 실행 시각과 뉴스봇 구동 여부를 저장 후 종료시킨다.
