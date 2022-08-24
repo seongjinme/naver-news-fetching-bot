@@ -122,12 +122,16 @@ function getSource(originallink) {
   const list = listSource();
 
   // 넘겨받은 뉴스 원문 주소에서 불필요한 부분을 제거한다.
-  const address = originallink.toLowerCase().replace(/^(https?:\/?\/?)?(\/?\/?www\.)?(\/?\/?news\.)?(\/?\/?view\.)?/, "");
+  const address = originallink.toLowerCase().replace(/^(https?:\/?\/?)?(\/?\/?www\.)?(\/?\/?news\.)?(\/?\/?view\.)?(\/?\/?post\.)?(\/?\/?photo\.)?(\/?\/?photos\.)?(\/?\/?blog\.)?/, "");
+  const domain = address.match(/^([^:\/\n\?\=]+)/)[0];
 
-  // 원문 주소에 맞는 매체명을 탐색하여 리턴한다. 탐색 결과가 없을 경우 "(알수없음)"을 리턴한다.
+  // 원문 주소에 맞는 매체명을 탐색하여 리턴한다. 탐색 결과가 없을 경우 원문이 실린 도메인 주소를 리턴한다.
   const index = searchSourceIndex(address, list);
   if (index >= 0 && index <= list.length - 1) {
     return list[index][1];
+  }
+  else if (domain) {
+    return domain;
   }
   else {
     return "(알수없음)";
