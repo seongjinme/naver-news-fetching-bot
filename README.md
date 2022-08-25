@@ -20,15 +20,22 @@
 <img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/screenshot_mobile.jpg" alt="Screenshot (Mobile)">
 
 ## Update Notes
+### Ver 2.2.2 (2022-08-24)
+이번 업데이트는 뉴스봇 사용자 분들을 위한 편의성 개선에 중점을 두었습니다.
+
+* 앞으로는 뉴스봇을 처음 실행하실 경우, **"설치 완료"** 메시지와 함께 **가장 최근의 1개 뉴스**를 샘플로 전송하여 드립니다.
+* 앞으로는 뉴스봇 이용 도중 검색 키워드를 변경하셨을 경우, **"키워드 변경 완료"** 메시지를 전송하여 드립니다.
+* 앞으로는 매체명 데이터(`source.gs`)에 수록되지 않은 매체를 `(알수없음)` 대신 도메인 주소로 표기합니다.
+
 ### Ver 2.2.1 (2022-05-03)
-* 매체명 데이터(source.gs)에 수록된 마지막 항목의 매체명을 탐색할 때 발생하는 오류를 바로잡았습니다.
+* 매체명 데이터(`source.gs`)에 수록된 마지막 항목의 매체명을 탐색할 때 발생하는 오류를 바로잡았습니다.
 
 ### Ver 2.2.0 (2022-05-02)
 * **마이크로소프트 팀즈(Microsoft Teams), 잔디(JANDI) 지원이 추가되었습니다.**
 * 매체명 데이터(`source.gs`)가 업데이트 되었습니다. 2022년 5월 기준 총 731개의 매체 정보가 포함되었습니다.
 * 매체명 탐색 속도가 개선되었습니다.
 
-보다 자세한 업데이트 내용은 [/CHANGELOG.md](https://github.com/seongjinme/naver-news-fetching-bot/blob/main/CHANGELOG.md)에서 확인하실 수 있습니다.
+보다 자세한 업데이트 내용은 [/CHANGELOG.md](./CHANGELOG.md)에서 확인하실 수 있습니다.
 
 ## Installation
 ### 1. Webhook 생성
@@ -70,7 +77,7 @@
 2. 아래와 같이 권한 인증 팝업이 뜹니다. “권한 검토”를 누릅니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/auth_popup_required.png" width="500" alt="Review auth popup"></p>
 3. 앞서 진행한 Google Chat과 Sheets 관련 액세스 허용 팝업이 뜹니다. “허용”을 누릅니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/auth_popup_allow.png" width="500" alt="Allow authentication"></p>
 4. Slack 등 Google 외부의 서비스와 처음 연동할 때엔 경우에 따라 "인증되지 않은 앱" 관련 경고 팝업이 뜨기도 합니다. 이때엔 좌측 하단의 `Advanced`를 누른 뒤 화면 하단의 `Go to [앱 URL] (Unsafe)` 링크를 눌러주시면 됩니다.<p><img src="https://github.com/seongjinme/naver-news-fetching-bot/blob/main/static/images/auth_popup_isnt_verified.png" width="500" alt="Allow authentication"></p>
-5. Google Apps Script 화면 하단의 “실행 로그” 영역에 “초기 설정이 완료되었습니다. 다음 실행 때부터 지금 시각 이후에 게재된 최신 뉴스를 가져옵니다.” 라는 문구가 뜨면 정상적으로 설정이 완료된 것입니다.
+5. 연결하신 메신저 앱으로 `[Naver News Fetching Bot 설치 완료]` 메시지를 수신하셨다면, 정상적으로 설정이 완료된 것입니다.
 6. 이제 앞으로 이 스크립트가 실행될 때마다, 설정하신 키워드가 담긴 최신 네이버 뉴스 항목이 자동으로 전송됩니다.
 
 (* 이 Apps Script 프로젝트는 별도의 배포(Deploy) 과정이 필요하지 않습니다.)

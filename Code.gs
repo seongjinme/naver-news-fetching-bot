@@ -1,5 +1,5 @@
 /*************************************************************************************************
- * Naver News Fetching Bot (v2.2.1)
+ * Naver News Fetching Bot (v2.2.2)
  * ***********************************************************************************************
  * 원하는 검색어가 포함된 최신 네이버 뉴스를 업무용 채팅 솔루션으로 전송합니다.
  * 슬랙(Slack), 팀즈(Microsoft Teams), 잔디(JANDI), 구글챗(Google Chat Space)을 지원합니다.
@@ -84,7 +84,7 @@ function globalVariables() {
  * 여기서부터는 꼭 필요한 경우가 아니라면 수정하지 말아주세요.
  * *************************************************************************/
 
-function getFeedUrl(keyword) {
+function getFeedUrl(keyword, startup) {
 
   // 뉴스 검색 결과 출력 건수 지정 (미지정시 기본값 10, 최대 100; 권장값 10~50)
   const display = "50";
@@ -95,14 +95,19 @@ function getFeedUrl(keyword) {
   // 뉴스 검색결과 정렬 옵션 (미지정시 기본값 date(날짜순), 이외에 sim(유사도순) 지정 가능하나 비추천)
   const sort = "date";
 
-  return "https://openapi.naver.com/v1/search/news.xml?query=" + keyword + "&display=" + display + "&start=" + start + "&sort=" + sort;
+  // 뉴스봇을 최초로 실행한 경우에는 피드 체크 용도로 위의 설정값과 무관하게 가장 최신의 1개 뉴스만 전송한다.
+  if (startup) {
+    return "https://openapi.naver.com/v1/search/news.xml?query=" + keyword + "&display=1&start=1&sort=date";
+  }
 
+  return "https://openapi.naver.com/v1/search/news.xml?query=" + keyword + "&display=" + display + "&start=" + start + "&sort=" + sort;
+  
 }
 
 
-function getFeed(keyword, clientId, clientSecret) {
+function getFeed(keyword, clientId, clientSecret, startup=false) {
 
-  const feedUrl = getFeedUrl(keyword);
+  const feedUrl = getFeedUrl(keyword, startup);
   const options = {
     "method": "get",
     "headers": {
@@ -122,12 +127,16 @@ function getSource(originallink) {
   const list = listSource();
 
   // 넘겨받은 뉴스 원문 주소에서 불필요한 부분을 제거한다.
-  const address = originallink.toLowerCase().replace(/^(https?:\/?\/?)?(\/?\/?www\.)?(\/?\/?news\.)?(\/?\/?view\.)?/, "");
+  const address = originallink.toLowerCase().replace(/^(https?:\/?\/?)?(\/?\/?www\.)?(\/?\/?news\.)?(\/?\/?view\.)?(\/?\/?post\.)?(\/?\/?photo\.)?(\/?\/?photos\.)?(\/?\/?blog\.)?/, "");
+  const domain = address.match(/^([^:\/\n\?\=]+)/)[0];
 
-  // 원문 주소에 맞는 매체명을 탐색하여 리턴한다. 탐색 결과가 없을 경우 "(알수없음)"을 리턴한다.
+  // 원문 주소에 맞는 매체명을 탐색하여 리턴한다. 탐색 결과가 없을 경우 원문이 실린 도메인 주소를 리턴한다.
   const index = searchSourceIndex(address, list);
   if (index >= 0 && index <= list.length - 1) {
     return list[index][1];
+  }
+  else if (domain) {
+    return domain;
   }
   else {
     return "(알수없음)";
@@ -195,13 +204,7 @@ function checkSourceIndex(index, list, address, address_stripped) {
 }
 
 
-function getArticle(g, feed) {
-
-  // PropertiesService 객체를 통해 저장된 마지막 뉴스 업데이트 시점을 가져온다.
-  const lastArticleUpdateTime = new Date(parseFloat(PropertiesService.getScriptProperties().getProperty("lastArticleUpdateTime")));
-
-  Logger.log("* 마지막 뉴스 업데이트 시점 : " + lastArticleUpdateTime);
-  Logger.log("* 네이버뉴스 키워드 검색 시작 : '" + g.keyword + "'");
+function getArticle(g, feed, lastArticleUpdateTime) {
 
   // 뉴스 검색 결과물을 가져와 item 단위로 시간순 정렬시키고 Fetching 작업을 시작한다.
   const xml = XmlService.parse(feed.getContentText());
@@ -214,7 +217,7 @@ function getArticle(g, feed) {
 
     const pubDate = new Date(items[i].getChildText('pubDate'));
 
-    if (pubDate > lastArticleUpdateTime) {
+    if (!lastArticleUpdateTime || pubDate > lastArticleUpdateTime) {
 
       // 각 item 별로 데이터 필드들을 가져온다.
       const title = bleachText(items[i].getChildText('title'));
@@ -243,7 +246,7 @@ function getArticle(g, feed) {
       }
 
       // PropertiesService 객체에 마지막 뉴스 업데이트 시점을 새로 업데이트한다.
-      PropertiesService.getScriptProperties().setProperty('lastArticleUpdateTime', pubDate.getTime());
+      setProperty("lastArticleUpdateTime", pubDate.getTime());
       cnt++;
 
     }
@@ -267,45 +270,40 @@ async function postArticle(g, pubDateText, title, source, description, link) {
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
   if (g.allowBotSlack) {
-    const article = createArticleCardSlack(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardSlack(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookSlack, params);
   }
 
   if (g.allowBotTeams) {
-    const article = createArticleCardTeams(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardTeams(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookTeams, params);
   }
 
   if (g.allowBotJandi) {
-    const article = createArticleCardJandi(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
       "header": {
         "Accept": "application/vnd.tosslab.jandi-v2+json"
       },
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardJandi(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookJandi, params);
-    // Logger.Log(UrlFetchApp.getRequest())
   }
 
   if (g.allowBotGoogle) {
-    const article = createArticleCardGoogle(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardGoogle(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookGoogle, params);
   }
@@ -313,6 +311,48 @@ async function postArticle(g, pubDateText, title, source, description, link) {
   // 채팅 솔루션별 초당/분당 request 횟수 제한을 고려하여 다음 항목 처리 전에 일정 시간 대기시킨다.
   await sleep(200);
 
+}
+
+
+function postMessage(g, message) {
+  if (g.allowBotSlack) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(createMessageSlack(message))
+    };
+    UrlFetchApp.fetch(g.webhookSlack, params);
+  }
+
+  if (g.allowBotTeams) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(createMessageTeams(message))
+    };
+    UrlFetchApp.fetch(g.webhookTeams, params);
+  }
+
+  if (g.allowBotJandi) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "header": {
+        "Accept": "application/vnd.tosslab.jandi-v2+json"
+      },
+      "payload": JSON.stringify(createMessageJandi(message))
+    };
+    UrlFetchApp.fetch(g.webhookJandi, params);
+  }
+
+  if (g.allowBotGoogle) {
+    const params = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(createMessageGoogle(message))
+    };
+    UrlFetchApp.fetch(g.webhookGoogle, params);
+  }
 }
 
 
@@ -357,23 +397,41 @@ function bleachText(text) {
   text = text.replace(/&gt;/gi, '>');
   text = text.replace(/&amp;/gi, '&');
   text = text.replace(/`/gi, "'");
+  text = text.replace(/&apos;/gi, "'");
 
   return text;
 
 }
 
 
-function runFetchingBot() {
+function getProperty(property) {
+  // PropertiesService 객체에 지정된 property 속성값이 있다면 이를 리턴한다.
+  return PropertiesService.getScriptProperties().getProperty(property);
+}
 
-  // 뉴스봇을 처음 실행하는 경우, PropertiesService 객체를 통해 최초 실행 시각과 뉴스봇 구동 여부를 저장 후 종료시킨다.
-  if (!PropertiesService.getScriptProperties().getProperty("lastArticleUpdateTime")) {
-    PropertiesService.getScriptProperties().setProperty("lastArticleUpdateTime", Date.now());
-    Logger.log("* 초기 설정이 완료되었습니다. 다음 실행때부터 뉴스 항목을 가져옵니다.")
-    return;
-  }
+
+function setProperty(property, value) {
+  // PropertiesService 객체에 property 속성값으로 value를 입력한다.
+  PropertiesService.getScriptProperties().setProperty(property, value);
+}
+
+
+function runFetchingBot() {
 
   // 뉴스봇 구동 설정값들을 불러온다.
   const g = globalVariables();
+
+  // 네이버 검색 오픈 API Client ID 및 Secret 값을 체크한다.
+  if (!g.clientId || !g.clientSecret) {
+    Logger.log("* 네이버 검색 오픈 API의 Client ID 및 Secret 설정값을 다시 확인해주세요.\n");
+    return;
+  }
+
+  // 네이버 뉴스 검색 키워드 유무를 확인한다.
+  if (!g.keyword) {
+    Logger.log("* 뉴스를 검색하실 키워드를 설정해주세요.\n");
+    return;
+  }
 
   // 뉴스봇 및 아카이빙 기능이 모두 false로 설정된 경우 에러 로그와 함께 실행을 종료한다.
   if (!g.allowArchiving && !g.allowBotSlack && !g.allowBotTeams && !g.allowBotJandi && !g.allowBotGoogle) {
@@ -381,15 +439,50 @@ function runFetchingBot() {
     return;
   }
 
-  // 네이버 뉴스 피드를 체크한다.
-  const feed = getFeed(g.keyword, g.clientId, g.clientSecret);
+  // PropertiesService 객체에 저장된 lastArticleUpdateTime, registeredKeyword 속성값이 있는지 체크한다.
+  const lastArticleUpdateTime = getProperty("lastArticleUpdateTime") ? new Date(parseFloat(getProperty("lastArticleUpdateTime"))) : null;
+  const registeredKeyword = getProperty("registeredKeyword") ? getProperty("registeredKeyword") : null;
+  let feed;
 
-  // 피드의 응답 코드가 정상(200)이라면 뉴스봇 기능을 구동한다.
-  if (feed.getResponseCode() == 200) {
-    getArticle(g, feed);
+  // lastArticleUpdateTime 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
+  if (!lastArticleUpdateTime) {
+    feed = getFeed(g.keyword, g.clientId, g.clientSecret, true);
+    Logger.log("* 뉴스봇 초기 설정을 시작합니다.\n");
+  }
+  else {
+    feed = getFeed(g.keyword, g.clientId, g.clientSecret);
   }
 
-  // 이외의 응답 코드가 리턴될 경우 에러 체크를 위한 헤더 및 내용을 로그로 출력시킨다.
+  // 네이버 뉴스 피드를 체크하고, 피드의 응답 코드가 정상(200)이라면 뉴스봇 기능을 구동한다.
+  if (feed.getResponseCode() == 200) {
+
+    // 최초 실행한 경우 registeredKeyword 속성값을 등록한 뒤 안내 메시지를 전송한다.
+    if (!lastArticleUpdateTime) {
+      Logger.log("* 네이버뉴스 검색 키워드 등록 : '" + g.keyword + "'\n");
+      setProperty("registeredKeyword", g.keyword);
+
+      Logger.log("* 등록된 검색 키워드로 최근 1개 뉴스를 샘플로 전송하여 드립니다.\n");
+      postMessage(g, welcomeMessage(g.keyword));
+    }
+
+    else {
+
+      // 만약 기존에 등록된 키워드와 다른 검색 키워드로 변경되었다면, 변경된 키워드를 registeredKeyword 속성값으로 저장하고 안내 메시지를 전송한다.
+      if (registeredKeyword != g.keyword) {
+        Logger.log("* 네이버뉴스 검색 키워드 변경 : '" + registeredKeyword + "' -> '"+ g.keyword + "'\n");
+        postMessage(g, changeKeywordMessage(registeredKeyword, g.keyword));
+        setProperty("registeredKeyword", g.keyword);
+      }
+
+      Logger.log("* 마지막 뉴스 전송 시점 : " + lastArticleUpdateTime);
+      Logger.log("* 네이버뉴스 키워드 검색 시작 : '" + g.keyword + "'");
+    }
+
+    getArticle(g, feed, lastArticleUpdateTime);
+  
+  }
+
+  // 200 이외의 응답 코드가 리턴될 경우 에러 체크를 위한 헤더 및 내용을 로그로 출력시킨다.
   else {
     Logger.log("* 뉴스를 가져오는 과정에서 에러가 발생했습니다. 로그를 참고해주세요.\n");
     Logger.log(feed.getHeaders());
