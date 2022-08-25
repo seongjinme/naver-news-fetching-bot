@@ -246,7 +246,7 @@ function getArticle(g, feed, lastArticleUpdateTime) {
       }
 
       // PropertiesService 객체에 마지막 뉴스 업데이트 시점을 새로 업데이트한다.
-      setLastArticleUpdateTime(pubDate.getTime());
+      setProperty("lastArticleUpdateTime", pubDate.getTime());
       cnt++;
 
     }
@@ -270,44 +270,40 @@ async function postArticle(g, pubDateText, title, source, description, link) {
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
   if (g.allowBotSlack) {
-    const article = createArticleCardSlack(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardSlack(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookSlack, params);
   }
 
   if (g.allowBotTeams) {
-    const article = createArticleCardTeams(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardTeams(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookTeams, params);
   }
 
   if (g.allowBotJandi) {
-    const article = createArticleCardJandi(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
       "header": {
         "Accept": "application/vnd.tosslab.jandi-v2+json"
       },
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardJandi(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookJandi, params);
   }
 
   if (g.allowBotGoogle) {
-    const article = createArticleCardGoogle(pubDateText, title, source, description, link);
     const params = {
       "method": "post",
       "contentType": "application/json",
-      "payload": JSON.stringify(article)
+      "payload": JSON.stringify(createArticleCardGoogle(pubDateText, title, source, description, link))
     };
     UrlFetchApp.fetch(g.webhookGoogle, params);
   }
@@ -408,31 +404,15 @@ function bleachText(text) {
 }
 
 
-function getLastArticleUpdateTime() {
-  // PropertiesService 객체에 lastArticleUpdateTime 속성값이 있다면 이에 대응하는 Date 객체를 리턴시킨다.
-  if (PropertiesService.getScriptProperties().getProperty("lastArticleUpdateTime")) {
-    return new Date(parseFloat(PropertiesService.getScriptProperties().getProperty("lastArticleUpdateTime")));
-  }
+function getProperty(property) {
+  // PropertiesService 객체에 지정된 property 속성값이 있다면 이를 리턴한다.
+  return PropertiesService.getScriptProperties().getProperty(property);
 }
 
 
-function getRegisteredKeyword() {
-  // PropertiesService 객체에 registeredKeyword 속성값으로부터 기존에 설정된 검색 키워드를 체크한다.
-  if (PropertiesService.getScriptProperties().getProperty("registeredKeyword")) {
-    return PropertiesService.getScriptProperties().getProperty("registeredKeyword");
-  }
-}
-
-
-function setLastArticleUpdateTime(time) {
-  // PropertiesService 객체의 lastArticleUpdateTime 속성값으로 time값을 입력한다.
-  PropertiesService.getScriptProperties().setProperty('lastArticleUpdateTime', time);
-}
-
-
-function setRegisteredKeyword(keyword) {
-  // PropertiesService 객체의 registeredKeyword 속성값으로 keyword값을 입력한다.
-  PropertiesService.getScriptProperties().setProperty('registeredKeyword', keyword);
+function setProperty(property, value) {
+  // PropertiesService 객체에 property 속성값으로 value를 입력한다.
+  PropertiesService.getScriptProperties().setProperty(property, value);
 }
 
 
@@ -460,14 +440,14 @@ function runFetchingBot() {
   }
 
   // PropertiesService 객체에 저장된 lastArticleUpdateTime, registeredKeyword 속성값이 있는지 체크한다.
-  const lastArticleUpdateTime = getLastArticleUpdateTime();
-  const registeredKeyword = getRegisteredKeyword();
+  const lastArticleUpdateTime = getProperty("lastArticleUpdateTime") ? new Date(parseFloat(getProperty("lastArticleUpdateTime"))) : null;
+  const registeredKeyword = getProperty("registeredKeyword") ? getProperty("registeredKeyword") : null;
   let feed;
 
   // lastArticleUpdateTime 속성값의 유무로 뉴스봇 최초 실행 여부를 판단하고 뉴스 피드를 받아온다.
   if (!lastArticleUpdateTime) {
     feed = getFeed(g.keyword, g.clientId, g.clientSecret, true);
-    Logger.log("* 뉴스봇 초기 설정을 시작합니다.");
+    Logger.log("* 뉴스봇 초기 설정을 시작합니다.\n");
   }
   else {
     feed = getFeed(g.keyword, g.clientId, g.clientSecret);
@@ -478,28 +458,28 @@ function runFetchingBot() {
 
     // 최초 실행한 경우 registeredKeyword 속성값을 등록한 뒤 안내 메시지를 전송한다.
     if (!lastArticleUpdateTime) {
-      Logger.log("* 네이버뉴스 키워드 검색 등록 : '" + g.keyword + "'");
-      if (!registeredKeyword) {
-        setRegisteredKeyword(g.keyword);
-      }
-      if (!lastArticleUpdateTime) {
-        postMessage(g, welcomeMessage(g.keyword));
-      }
+      Logger.log("* 네이버뉴스 검색 키워드 등록 : '" + g.keyword + "'\n");
+      setProperty("registeredKeyword", g.keyword);
+
+      Logger.log("* 등록된 검색 키워드로 최근 1개 뉴스를 샘플로 전송하여 드립니다.\n");
+      postMessage(g, welcomeMessage(g.keyword));
     }
 
-    // 최초 실행이 아닌 경우 통상적인 뉴스봇 기능을 실행한다.
     else {
 
       // 만약 기존에 등록된 키워드와 다른 검색 키워드로 변경되었다면, 변경된 키워드를 registeredKeyword 속성값으로 저장하고 안내 메시지를 전송한다.
       if (registeredKeyword != g.keyword) {
+        Logger.log("* 네이버뉴스 검색 키워드 변경 : '" + registeredKeyword + "' -> '"+ g.keyword + "'\n");
         postMessage(g, changeKeywordMessage(registeredKeyword, g.keyword));
-        setRegisteredKeyword(g.keyword);
+        setProperty("registeredKeyword", g.keyword);
       }
 
       Logger.log("* 마지막 뉴스 전송 시점 : " + lastArticleUpdateTime);
       Logger.log("* 네이버뉴스 키워드 검색 시작 : '" + g.keyword + "'");
     }
+
     getArticle(g, feed, lastArticleUpdateTime);
+  
   }
 
   // 200 이외의 응답 코드가 리턴될 경우 에러 체크를 위한 헤더 및 내용을 로그로 출력시킨다.
