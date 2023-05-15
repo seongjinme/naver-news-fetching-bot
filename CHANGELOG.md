@@ -1,5 +1,10 @@
 # Changelog
 
+## Ver 2.2.3 (2023-05-15)
+
+### Fixed
+* 뉴스봇 구동 과정에서 발생하는 검색어 키워드의 URL 인코딩 오류가 수정되었습니다. ([#4](https://github.com/seongjinme/naver-news-fetching-bot/pull/4)) - [Lucas_Ghae](https://github.com/JungHoonGhae) 님
+
 ## Ver 2.2.2 (2022-08-24)
 
 ### Changed
