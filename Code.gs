@@ -94,15 +94,16 @@ function getFeedUrl(keyword, startup) {
 
   // 뉴스 검색결과 정렬 옵션 (미지정시 기본값 date(날짜순), 이외에 sim(유사도순) 지정 가능하나 비추천)
   const sort = "date";
+  
+  // 키워드 매개변수를 URL에서 올바르게 표현하기 위해 URL 인코딩합니다.
+  const encodedKeyword = encodeURIComponent(keyword);
 
   // 뉴스봇을 최초로 실행한 경우에는 피드 체크 용도로 위의 설정값과 무관하게 가장 최신의 1개 뉴스만 전송한다.
   if (startup) {
-    return "https://openapi.naver.com/v1/search/news.xml?query=" + keyword + "&display=1&start=1&sort=date";
+    return "https://openapi.naver.com/v1/search/news.xml?query=" + encodedKeyword + "&display=1&start=1&sort=date";
   }
-
-  return "https://openapi.naver.com/v1/search/news.xml?query=" + keyword + "&display=" + display + "&start=" + start + "&sort=" + sort;
-  
-}
+  return "https://openapi.naver.com/v1/search/news.xml?query=" + encodedKeyword + "&display=" + display + "&start=" + start + "&sort=" + sort;
+  }
 
 
 function getFeed(keyword, clientId, clientSecret, startup=false) {
