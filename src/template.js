@@ -9,8 +9,18 @@
  * 슬랙(Slack)용 뉴스 카드 및 메시지 레이아웃
  * ***********************************************************************************************/
 
-function createArticleCardSlack(pubDateText, title, source, description, link) {
-  return (card = {
+/**
+ * 슬랙용 뉴스 카드를 생성합니다.
+ * @param {Object} params - 뉴스 항목 정보
+ * @param {string} params.pubDateText - 발행일 텍스트
+ * @param {string} params.title - 뉴스 제목
+ * @param {string} params.source - 뉴스 출처
+ * @param {string} params.description - 뉴스 설명
+ * @param {string} params.link - 뉴스 링크 URL
+ * @returns {Object} 슬랙 메시지 카드 객체
+ */
+function createArticleCardSlack({ pubDateText, title, source, description, link }) {
+  return {
     text: "[" + source + "] " + title,
     blocks: [
       {
@@ -54,11 +64,16 @@ function createArticleCardSlack(pubDateText, title, source, description, link) {
         type: "divider",
       },
     ],
-  });
+  };
 }
 
+/**
+ * 슬랙용 일반 메시지를 생성합니다.
+ * @param {string} message - 전송할 메시지 내용
+ * @returns {Object} 슬랙 메시지 객체
+ */
 function createMessageSlack(message) {
-  return (text = {
+  return {
     text: message,
     blocks: [
       {
@@ -72,15 +87,25 @@ function createMessageSlack(message) {
         type: "divider",
       },
     ],
-  });
+  };
 }
 
 /*************************************************************************************************
  * 팀즈(Microsoft Teams)용 뉴스 카드 및 메시지 레이아웃
  * ***********************************************************************************************/
 
-function createArticleCardTeams(pubDateText, title, source, description, link) {
-  return (card = {
+/**
+ * 팀즈용 뉴스 카드를 생성합니다.
+ * @param {Object} params - 뉴스 항목 정보
+ * @param {string} params.pubDateText - 발행일 텍스트
+ * @param {string} params.title - 뉴스 제목
+ * @param {string} params.source - 뉴스 출처
+ * @param {string} params.description - 뉴스 설명
+ * @param {string} params.link - 뉴스 링크 URL
+ * @returns {Object} 팀즈 메시지 카드 객체
+ */
+function createArticleCardTeams({ pubDateText, title, source, description, link }) {
+  return {
     type: "message",
     summary: "[" + source + "] " + title,
     attachments: [
@@ -141,11 +166,16 @@ function createArticleCardTeams(pubDateText, title, source, description, link) {
         },
       },
     ],
-  });
+  };
 }
 
+/**
+ * 팀즈용 일반 메시지를 생성합니다.
+ * @param {string} message - 전송할 메시지 내용
+ * @returns {Object} 팀즈 메시지 객체
+ */
 function createMessageTeams(message) {
-  return (text = {
+  return {
     type: "message",
     summary: message,
     attachments: [
@@ -166,31 +196,56 @@ function createMessageTeams(message) {
         },
       },
     ],
-  });
+  };
 }
 
 /*************************************************************************************************
  * 잔디(JANDI)용 뉴스 카드 및 메시지 레이아웃
  * ***********************************************************************************************/
 
-function createArticleCardJandi(pubDateText, title, source, description, link) {
-  return (card = {
+/**
+ * 잔디용 뉴스 카드를 생성합니다.
+ * @param {Object} params - 뉴스 항목 정보
+ * @param {string} params.pubDateText - 발행일 텍스트
+ * @param {string} params.title - 뉴스 제목
+ * @param {string} params.source - 뉴스 출처
+ * @param {string} params.description - 뉴스 설명
+ * @param {string} params.link - 뉴스 링크 URL
+ * @returns {Object} 잔디 메시지 카드 객체
+ */
+function createArticleCardJandi({ pubDateText, title, source, description, link }) {
+  return {
     body: "[" + title + "](" + link + ")\n" + source + " | " + pubDateText + "\n\n" + description,
-  });
+  };
 }
 
+/**
+ * 잔디용 일반 메시지를 생성합니다.
+ * @param {string} message - 전송할 메시지 내용
+ * @returns {Object} 잔디 메시지 객체
+ */
 function createMessageJandi(message) {
-  return (text = {
+  return {
     body: message,
-  });
+  };
 }
 
 /*************************************************************************************************
  * 구글챗(Google Chat)용 뉴스 카드 및 메시지 레이아웃
  * ***********************************************************************************************/
 
-function createArticleCardGoogle(pubDateText, title, source, description, link) {
-  return (card = {
+/**
+ * 구글챗용 뉴스 카드를 생성합니다.
+ * @param {Object} params - 뉴스 항목 정보
+ * @param {string} params.pubDateText - 발행일 텍스트
+ * @param {string} params.title - 뉴스 제목
+ * @param {string} params.source - 뉴스 출처
+ * @param {string} params.description - 뉴스 설명
+ * @param {string} params.link - 뉴스 링크 URL
+ * @returns {Object} 구글챗 메시지 카드 객체
+ */
+function createArticleCardGoogle({ pubDateText, title, source, description, link }) {
+  return {
     fallbackText: "[" + source + "] " + title,
     cards: [
       {
@@ -232,37 +287,43 @@ function createArticleCardGoogle(pubDateText, title, source, description, link) 
         ],
       },
     ],
-  });
+  };
 }
 
+/**
+ * 구글챗용 일반 메시지를 생성합니다.
+ * @param {string} message - 전송할 메시지 내용
+ * @returns {Object} 구글챗 메시지 객체
+ */
 function createMessageGoogle(message) {
-  return (text = {
+  return {
     text: message,
-  });
+  };
 }
 
 /*************************************************************************************************
  * 초기 설정 완료시 안내 메시지
  * ***********************************************************************************************/
 
-function welcomeMessage(keyword) {
-  return (text =
-    "[Naver News Fetching Bot 설치 완료]\n\n네이버 뉴스 봇이 설치되었습니다. 앞으로 '" +
-    keyword +
-    "' 키워드에 대한 최신 뉴스가 아래와 같이 주기적으로 전송됩니다.");
+/**
+ * 초기 설정 완료 시 안내 메시지를 생성합니다.
+ * @param {Array<string>} searchKeywords - 설정된 검색 키워드들
+ * @returns {string} 초기 설정 완료 안내 메시지
+ */
+function createWelcomeMessage(searchKeywords) {
+  return `"[Naver News Fetching Bot 설치 완료]\n\n네이버 뉴스 봇이 설치되었습니다. 앞으로 '${searchKeywords.join(", ")}' 키워드에 대한 최신 뉴스가 주기적으로 전송됩니다.`;
 }
 
 /*************************************************************************************************
  * 검색 키워드 변경시 안내 메시지
  * ***********************************************************************************************/
 
-function changeKeywordMessage(before, after) {
-  return (text =
-    "[Naver News Fetching Bot 키워드 변경 완료]\n\n네이버 뉴스 봇의 검색 키워드가 '" +
-    before +
-    "'에서 '" +
-    after +
-    "'로 변경 완료되었습니다. 앞으로 '" +
-    after +
-    "' 키워드에 대한 최신 뉴스가 전송됩니다.");
+/**
+ * 검색 키워드 변경 시 안내 메시지를 생성합니다.
+ * @param {Array<string>} before - 변경 전 검색 키워드들
+ * @param {Array<string>} after - 변경 후 검색 키워드들
+ * @returns {string} 검색 키워드 변경 안내 메시지
+ */
+function createKeywordsChangedMessage(before, after) {
+  return `[Naver News Fetching Bot 키워드 변경 완료]\n\n네이버 뉴스 봇의 검색 키워드가 '${before}'에서 '${after}'로 변경되었습니다.`;
 }
