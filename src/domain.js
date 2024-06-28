@@ -99,3 +99,72 @@ class NewsItem {
     });
   }
 }
+
+/**
+ * NewsItem 항목들을 관리하는 맵 클래스입니다.
+ */
+class NewsItemMap {
+  /**
+   * NewsItemMap 클래스의 생성자입니다.
+   * @param {string[]} lastFetchedNewsItems - 이전에 가져온 뉴스 항목들의 해시 ID 배열
+   */
+  constructor(lastFetchedNewsItems) {
+    this._newsItemsMap = new Map();
+    this._lastFetchedNewsItems = lastFetchedNewsItems;
+  }
+
+  /**
+   * 뉴스 항목을 맵에 추가합니다. 이미 존재하는 항목의 경우 검색 키워드만 업데이트합니다.
+   * @param {NewsItem} newsItem - 추가할 뉴스 항목
+   */
+  addNewsItem(newsItem) {
+    if (this._lastFetchedNewsItems.includes(newsItem.hashId)) return;
+
+    const existingItem = this._newsItemsMap.get(newsItem.hashId);
+    if (existingItem) {
+      existingItem.addSearchKeyword(newsItem.data.keywords);
+      return;
+    }
+
+    this._newsItemsMap.set(newsItem.hashId, newsItem);
+  }
+
+  /**
+   * 여러 뉴스 항목을 한 번에 맵에 추가합니다.
+   * @param {NewsItem[]} newsItems - 추가할 뉴스 항목 배열
+   */
+  set newsItems(newsItems) {
+    newsItems.forEach((newsItem) => this.addNewsItem(newsItem));
+  }
+
+  /**
+   * 맵에 저장된 모든 뉴스 항목을 배열로 반환합니다.
+   * @returns {NewsItem[]} 모든 뉴스 항목 배열
+   */
+  get newsItems() {
+    return Array.from(this._newsItemsMap.values());
+  }
+
+  /**
+   * 맵에 저장된 모든 뉴스 항목의 해시 ID를 배열로 반환합니다.
+   * @returns {string[]} 모든 뉴스 항목의 해시 ID 배열
+   */
+  get newsItemsHashIds() {
+    return Array.from(this._newsItemsMap.keys());
+  }
+
+  /**
+   * 맵에 저장된 뉴스 항목의 개수를 반환합니다.
+   * @returns {number} 저장된 뉴스 항목의 개수
+   */
+  get size() {
+    return this._newsItemsMap.size;
+  }
+
+  /**
+   * 맵에 저장된 모든 뉴스 항목을 제거합니다.
+   */
+  clear() {
+    this._newsItemsMap.clear();
+  }
+}
