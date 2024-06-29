@@ -9,8 +9,9 @@ class NewsFetchService {
    * @param {string} params.clientId - 네이버 API 클라이언트 ID
    * @param {string} params.clientSecret - 네이버 API 클라이언트 시크릿
    * @param {Object} params.newsSource - 뉴스 소스 목록
+   * @param {Array<string>} params.lastFetchedNewsItems - 가장 최근에 처리된 뉴스 항목들의 해시 ID 배열
    */
-  constructor({ apiUrl, clientId, clientSecret, newsSource }) {
+  constructor({ apiUrl, clientId, clientSecret, newsSource, lastFetchedNewsItems }) {
     this._apiUrl = apiUrl;
     this._fetchOptions = {
       method: "get",
@@ -20,7 +21,7 @@ class NewsFetchService {
       },
     };
     this._newsSourceFinder = new NewsSourceFinder(newsSource);
-    this._newsItemMap = new NewsItemMap();
+    this._newsItemMap = new NewsItemMap(lastFetchedNewsItems);
   }
 
   /**
@@ -49,7 +50,7 @@ class NewsFetchService {
       this._fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems });
     });
 
-    return this._newsItemMap.getAllNewsItems();
+    return this._newsItemMap.newsItems;
   }
 
   /**
@@ -75,7 +76,7 @@ class NewsFetchService {
         .items.filter((item) => new Date(item.pubDate) >= lastNewsItemPubDate)
         .map((item) => this._createNewsItem(item));
 
-      this._newsItemMap.addAll(newsItems);
+      this._newsItemMap.newsItems(newsItems);
 
       if (newsItems.length < 50) break;
 

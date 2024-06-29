@@ -106,7 +106,7 @@ class NewsItem {
 class NewsItemMap {
   /**
    * NewsItemMap 클래스의 생성자입니다.
-   * @param {string[]} lastFetchedNewsItems - 이전에 가져온 뉴스 항목들의 해시 ID 배열
+   * @param {Array<string>} lastFetchedNewsItems - 이전에 가져온 뉴스 항목들의 해시 ID 배열
    */
   constructor(lastFetchedNewsItems) {
     this._newsItemsMap = new Map();
