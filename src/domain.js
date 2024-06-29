@@ -19,14 +19,14 @@ class NewsItem {
     this._description = description;
     this._pubDate = pubDate;
     this._keywords = [].push(keyword);
-    this._hashId = this.createHashId();
+    this._hashId = this._createHashId();
   }
 
   /**
    * 뉴스 기사의 고유한 해시 ID값을 생성합니다.
    * @returns {string} 생성된 해시 ID값
    */
-  createHashId() {
+  _createHashId() {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     const hash = Array.from({ length: this._link.length }).reduce((acc, _, index) => {
@@ -117,7 +117,7 @@ class NewsItemMap {
    * 뉴스 항목을 맵에 추가합니다. 이미 존재하는 항목의 경우 검색 키워드만 업데이트합니다.
    * @param {NewsItem} newsItem - 추가할 뉴스 항목
    */
-  addNewsItem(newsItem) {
+  _addNewsItem(newsItem) {
     if (this._lastFetchedNewsItems.includes(newsItem.hashId)) return;
 
     const existingItem = this._newsItemsMap.get(newsItem.hashId);
@@ -134,7 +134,7 @@ class NewsItemMap {
    * @param {NewsItem[]} newsItems - 추가할 뉴스 항목 배열
    */
   set newsItems(newsItems) {
-    newsItems.forEach((newsItem) => this.addNewsItem(newsItem));
+    newsItems.forEach((newsItem) => this._addNewsItem(newsItem));
   }
 
   /**

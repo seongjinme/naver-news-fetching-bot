@@ -29,11 +29,11 @@ class NewsFetchService {
    * @returns {NewsItem} 새로 가져온 뉴스 항목들
    */
   fetchSingleNewsItem(searchKeyword) {
-    const fetchUrl = this.createFetchUrl({ searchKeyword, display: 1 });
+    const fetchUrl = this._createFetchUrl({ searchKeyword, display: 1 });
     const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
     const fetchedNewsItem = JSON.parse(fetchedData).items[0];
 
-    return this.createNewsItem(fetchedNewsItem);
+    return this._createNewsItem(fetchedNewsItem);
   }
 
   /**
@@ -45,19 +45,11 @@ class NewsFetchService {
    * @returns {Array<NewsItem>} 새로 가져온 뉴스 항목들
    */
   fetchNewsItems({ searchKeywords, lastNewsItemPubDate, maxItems = 100 }) {
-    try {
-      searchKeywords.forEach((searchKeyword) => {
-        this.fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems });
-      });
+    searchKeywords.forEach((searchKeyword) => {
+      this._fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems });
+    });
 
-      return this._newsItemMap.getAllNewsItems();
-    } catch (error) {
-      Logger.log("* 뉴스를 가져오는 과정에서 에러가 발생했습니다. 로그를 참고해주세요.\n");
-      Logger.log(fetchedData.getHeaders());
-      Logger.log(fetchedData.getContentText());
-
-      throw error;
-    }
+    return this._newsItemMap.getAllNewsItems();
   }
 
   /**
@@ -67,12 +59,12 @@ class NewsFetchService {
    * @param {Date} params.lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
    * @param {number} params.maxItems - 가져올 뉴스 항목 숫자의 최대치
    */
-  fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems }) {
+  _fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems }) {
     let startIndex = 1;
     let totalFetched = 0;
 
     while (totalFetched < maxItems) {
-      const fetchUrl = this.createFetchUrl({ searchKeyword, startIndex });
+      const fetchUrl = this._createFetchUrl({ searchKeyword, startIndex });
       const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
 
       if (fetchedData.getResponseCode() !== 200) {
@@ -81,7 +73,7 @@ class NewsFetchService {
 
       const newsItems = JSON.parse(fetchedData)
         .items.filter((item) => new Date(item.pubDate) >= lastNewsItemPubDate)
-        .map((item) => this.createNewsItem(item));
+        .map((item) => this._createNewsItem(item));
 
       this._newsItemMap.addAll(newsItems);
 
@@ -97,7 +89,7 @@ class NewsFetchService {
    * @param {Object} newsItem - API로부터 받아온 뉴스 항목 데이터
    * @returns {NewsItem} 생성된 NewsItem 객체
    */
-  createNewsItem(newsItem) {
+  _createNewsItem(newsItem) {
     return new NewsItem({
       title: bleachText(newsItem.title),
       link: newsItem.link,
@@ -115,7 +107,7 @@ class NewsFetchService {
    * @param {number} [params.display=50] - 한 번에 가져올 뉴스 항목 수
    * @returns {string} 생성된 API 요청 URL
    */
-  createFetchUrl({ searchKeyword, startIndex = 1, display = 50 }) {
+  _createFetchUrl({ searchKeyword, startIndex = 1, display = 50 }) {
     const searchParams = new URLSearchParams({
       query: encodeURIComponent(searchKeyword),
       start: startIndex,
@@ -145,13 +137,13 @@ class NewsSourceFinder {
    * @returns {string} 찾은 뉴스 소스 (찾지 못한 경우 도메인 또는 "(알수없음)" 반환)
    */
   getSourceByLink(originalLink) {
-    const domain = this.extractDomain(originalLink);
+    const domain = this._extractDomain(originalLink);
 
     if (!domain) {
       return "(알수없음)";
     }
 
-    const index = this.findSourceIndex(originalLink);
+    const index = this._findSourceIndex(originalLink);
 
     return index !== -1 ? this._sources[index][1] : domain;
   }
@@ -161,7 +153,7 @@ class NewsSourceFinder {
    * @param {string} url - 도메인을 추출할 URL
    * @returns {string|null} 추출된 도메인 (도메인이 없는 경우 null 반환)
    */
-  extractDomain(url) {
+  _extractDomain(url) {
     const address = url
       .toLowerCase()
       .replace(
@@ -178,7 +170,7 @@ class NewsSourceFinder {
    * @param {string} url - 도메인을 탐색할 URL
    * @returns {number} 찾은 뉴스 소스의 인덱스 (찾지 못한 경우 -1 반환)
    */
-  findSourceIndex(url) {
+  _findSourceIndex(url) {
     let left = 0;
     let right = this._sources.length - 1;
 
