@@ -92,7 +92,7 @@ class NewsItem {
    * @property {string} link - 기사 링크
    * @property {string} source - 기사 출처
    * @property {string} description - 기사 설명
-   * @property {Date} pubDate - 기사 발행일
+   * @property {string} pubDateText - 기사 발행일 문자열
    * @property {Array<string>} keywords - 기사 검색어 목록
    */
   get data() {
