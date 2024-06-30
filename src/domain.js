@@ -63,10 +63,10 @@ class NewsItem {
 
   /**
    * 뉴스 기사에 대한 검색 키워드를 추가합니다.
-   * @param {string} keyword - 추가할 검색 키워드 항목
+   * @param {Array<string>} keywords - 추가할 검색 키워드 항목
    */
-  addSearchKeyword(keyword) {
-    this._keywords.push(keyword);
+  addSearchKeyword(keywords) {
+    this._keywords = [...this._keywords, ...keywords];
   }
 
   /**
@@ -78,7 +78,15 @@ class NewsItem {
   }
 
   /**
-   * 뉴스 기사의 데이터를 불변 객체로 반환합니다.
+   * 뉴스 기사에 대한 검색 키워드 목록을 반환합니다.
+   * @returns {Array<string>} 뉴스 기사의 검색 키워드 목록
+   */
+  get keywords() {
+    return [...this._keywords];
+  }
+
+  /**
+   * 뉴스 기사의 데이터를 반환합니다.
    * @type {Object}
    * @property {string} title - 기사 제목
    * @property {string} link - 기사 링크
@@ -86,17 +94,16 @@ class NewsItem {
    * @property {string} description - 기사 설명
    * @property {Date} pubDate - 기사 발행일
    * @property {Array<string>} keywords - 기사 검색어 목록
-   * @readonly
    */
   get data() {
-    return Object.freeze({
+    return {
       title: this._title,
       link: this._link,
       source: this._source,
       description: this._description,
-      pubDate: this._pubDate,
-      keywords: this._keywords,
-    });
+      pubDateText: Utilities.formatDate(this._pubDate, "GMT+9", "yyyy-MM-dd HH:mm:ss"),
+      keywords: [...this._keywords],
+    };
   }
 }
 
@@ -122,7 +129,7 @@ class NewsItemMap {
 
     const existingItem = this._newsItemsMap.get(newsItem.hashId);
     if (existingItem) {
-      existingItem.addSearchKeyword(newsItem.data.keywords);
+      existingItem.addSearchKeyword(newsItem.keywords);
       return;
     }
 
