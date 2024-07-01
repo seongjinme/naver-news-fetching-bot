@@ -5,301 +5,321 @@
  * 상세 레이아웃 설정 방법은 각 메신저별 개발자 문서를 참고해주세요.
  * ***********************************************************************************************/
 
-/*************************************************************************************************
- * 슬랙(Slack)용 뉴스 카드 및 메시지 레이아웃
- * ***********************************************************************************************/
-
 /**
- * 슬랙용 뉴스 카드를 생성합니다.
- * @param {Object} params - 뉴스 항목 정보
- * @param {string} params.pubDateText - 발행일 텍스트
- * @param {string} params.title - 뉴스 제목
- * @param {string} params.source - 뉴스 출처
- * @param {string} params.description - 뉴스 설명
- * @param {string} params.link - 뉴스 링크 URL
- * @returns {Object} 슬랙 메시지 카드 객체
+ * 각 메신저별 뉴스 전송용 메시지 카드 레이아웃을 생성하는 유틸리티 객체입니다.
+ * @typedef {Object} NewsCardGenerator
+ * @property {function(Object): Object} slack - Slack용 뉴스 카드 객체 생성 함수
+ * @property {function(Object): Object} teams - MS Teams용 뉴스 카드 객체 생성 함수
+ * @property {function(Object): Object} jandi - JANDI용 뉴스 카드 객체 생성 함수
+ * @property {function(Object): Object} googleChat - Google Chat용 뉴스 카드 객체 생성 함수
  */
-function createArticleCardSlack({ pubDateText, title, source, description, link }) {
-  return {
-    text: "[" + source + "] " + title,
-    blocks: [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "*" + title + "*",
-        },
-      },
-      {
-        type: "context",
-        elements: [
-          {
+const NewsCardGenerator = {
+  /**
+   * 슬랙용 뉴스 카드를 생성합니다.
+   * @param {Object} params - 뉴스 항목 정보
+   * @param {string} params.title - 뉴스 제목
+   * @param {string} params.link - 뉴스 링크 URL
+   * @param {string} params.source - 뉴스 출처
+   * @param {string} params.description - 뉴스 설명
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {Array<string>} params.keywords - 뉴스에 해당하는 검색어 목록
+   * @returns {Object} 슬랙 메시지 카드 객체
+   */
+  slack: ({ title, link, source, description, pubDateText, keywords }) => {
+    return {
+      text: `[${source}] ${title}`,
+      blocks: [
+        {
+          type: "section",
+          text: {
             type: "mrkdwn",
-            text: "*" + source + "* | " + pubDateText,
+            text: `*${title}*`,
           },
-        ],
-      },
-      {
-        type: "section",
-        text: {
-          type: "plain_text",
-          text: description,
         },
-      },
-      {
-        type: "actions",
-        block_id: "go_to_url",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "기사보기",
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: `*${source}* | ${pubDateText}`,
             },
-            url: link,
+          ],
+        },
+        {
+          type: "section",
+          text: {
+            type: "plain_text",
+            text: description,
           },
-        ],
-      },
-      {
-        type: "divider",
-      },
-    ],
-  };
-}
-
-/**
- * 슬랙용 일반 메시지를 생성합니다.
- * @param {string} message - 전송할 메시지 내용
- * @returns {Object} 슬랙 메시지 객체
- */
-function createMessageSlack(message) {
-  return {
-    text: message,
-    blocks: [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: message,
         },
-      },
-      {
-        type: "divider",
-      },
-    ],
-  };
-}
-
-/*************************************************************************************************
- * 팀즈(Microsoft Teams)용 뉴스 카드 및 메시지 레이아웃
- * ***********************************************************************************************/
-
-/**
- * 팀즈용 뉴스 카드를 생성합니다.
- * @param {Object} params - 뉴스 항목 정보
- * @param {string} params.pubDateText - 발행일 텍스트
- * @param {string} params.title - 뉴스 제목
- * @param {string} params.source - 뉴스 출처
- * @param {string} params.description - 뉴스 설명
- * @param {string} params.link - 뉴스 링크 URL
- * @returns {Object} 팀즈 메시지 카드 객체
- */
-function createArticleCardTeams({ pubDateText, title, source, description, link }) {
-  return {
-    type: "message",
-    summary: "[" + source + "] " + title,
-    attachments: [
-      {
-        contentType: "application/vnd.microsoft.card.adaptive",
-        contentUrl: null,
-        content: {
-          type: "AdaptiveCard",
-          body: [
+        {
+          type: "context",
+          elements: [
             {
-              type: "TextBlock",
-              text: title,
-              weight: "Bolder",
-              size: "Large",
-              wrap: true,
-              width: "stretch",
+              type: "mrkdwn",
+              text: `*검색어 :* ${keywords.join(", ")}`,
             },
+          ],
+        },
+        {
+          type: "actions",
+          block_id: "go_to_url",
+          elements: [
             {
-              type: "ColumnSet",
-              columns: [
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "기사보기",
+              },
+              url: link,
+            },
+          ],
+        },
+        {
+          type: "divider",
+        },
+      ],
+    };
+  },
+
+  /**
+   * 팀즈용 뉴스 카드를 생성합니다.
+   * @param {Object} params - 뉴스 항목 정보
+   * @param {string} params.title - 뉴스 제목
+   * @param {string} params.link - 뉴스 링크 URL
+   * @param {string} params.source - 뉴스 출처
+   * @param {string} params.description - 뉴스 설명
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {Array<string>} params.keywords - 뉴스에 해당하는 검색어 목록
+   * @returns {Object} 팀즈 메시지 카드 객체
+   */
+  teams: ({ title, link, source, description, pubDateText, keywords }) => {
+    return {
+      type: "message",
+      summary: `[${source}] ${title}`,
+      attachments: [
+        {
+          contentType: "application/vnd.microsoft.card.adaptive",
+          contentUrl: null,
+          content: {
+            type: "AdaptiveCard",
+            body: [
+              {
+                type: "TextBlock",
+                text: title,
+                weight: "Bolder",
+                size: "Large",
+                wrap: true,
+                width: "stretch",
+              },
+              {
+                type: "ColumnSet",
+                columns: [
+                  {
+                    type: "Column",
+                    items: [
+                      {
+                        type: "TextBlock",
+                        text: source,
+                        weight: "Bolder",
+                        wrap: true,
+                      },
+                      {
+                        type: "TextBlock",
+                        spacing: "None",
+                        text: pubDateText,
+                        isSubtle: true,
+                        wrap: true,
+                      },
+                    ],
+                    width: "stretch",
+                  },
+                ],
+              },
+              {
+                type: "TextBlock",
+                text: description,
+                wrap: true,
+                width: "stretch",
+              },
+              {
+                type: "TextBlock",
+                text: `**검색어 :** ${keywords.join(", ")}`,
+                wrap: true,
+                size: "Small",
+              },
+            ],
+            actions: [
+              {
+                type: "Action.OpenUrl",
+                url: link,
+                title: "기사보기",
+              },
+            ],
+            $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+            version: "1.4",
+          },
+        },
+      ],
+    };
+  },
+
+  /**
+   * 잔디용 뉴스 카드를 생성합니다.
+   * @param {Object} params - 뉴스 항목 정보
+   * @param {string} params.title - 뉴스 제목
+   * @param {string} params.link - 뉴스 링크 URL
+   * @param {string} params.source - 뉴스 출처
+   * @param {string} params.description - 뉴스 설명
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {Array<string>} params.keywords - 뉴스에 해당하는 검색어 목록
+   * @returns {Object} 잔디 메시지 카드 객체
+   */
+  jandi: ({ title, link, source, description, pubDateText, keywords }) => {
+    const body = `[${title}](${link})\n${source} | ${pubDateText}\n\n${description}\n\n검색어: ${keywords.join(", ")}`;
+    return { body };
+  },
+
+  /**
+   * 구글챗용 뉴스 카드를 생성합니다.
+   * @param {Object} params - 뉴스 항목 정보
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {string} params.title - 뉴스 제목
+   * @param {string} params.source - 뉴스 출처
+   * @param {string} params.description - 뉴스 설명
+   * @param {string} params.link - 뉴스 링크 URL
+   * @returns {Object} 구글챗 메시지 카드 객체
+   */
+  googleChat: ({ title, link, source, description, pubDateText, keywords }) => {
+    return {
+      fallbackText: `[${source}] ${title}`,
+      cards: [
+        {
+          header: {
+            title: title,
+            subtitle: `${source} | ${pubDateText}`,
+          },
+          sections: [
+            {
+              header: source,
+              widgets: [
                 {
-                  type: "Column",
-                  items: [
-                    {
-                      type: "TextBlock",
-                      text: source,
-                      weight: "Bolder",
-                      wrap: true,
-                    },
-                    {
-                      type: "TextBlock",
-                      spacing: "None",
-                      text: pubDateText,
-                      isSubtle: true,
-                      wrap: true,
-                    },
-                  ],
-                  width: "stretch",
+                  textParagraph: {
+                    text: description,
+                  },
+                },
+                {
+                  textParagraph: {
+                    text: `<b>검색어 :</b> ${keywords.join(", ")}`,
+                  },
+                },
+                {
+                  buttonList: {
+                    buttons: [
+                      {
+                        text: "기사보기",
+                        onClick: {
+                          openLink: {
+                            url: link,
+                          },
+                        },
+                      },
+                    ],
+                  },
                 },
               ],
             },
-            {
-              type: "TextBlock",
-              text: description,
-              wrap: true,
-              width: "stretch",
-            },
           ],
-          actions: [
-            {
-              type: "Action.OpenUrl",
-              url: link,
-              title: "기사보기",
-            },
-          ],
-          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-          version: "1.4",
         },
-      },
-    ],
-  };
-}
+      ],
+    };
+  },
+};
 
 /**
- * 팀즈용 일반 메시지를 생성합니다.
- * @param {string} message - 전송할 메시지 내용
- * @returns {Object} 팀즈 메시지 객체
+ * 각 메신저별 뉴스 전송용 메시지 카드 레이아웃을 생성하는 유틸리티 객체입니다.
+ * @typedef {Object} MessageGenerator
+ * @property {function(Object): Object} slack - Slack용 메시지 객체 생성 함수
+ * @property {function(Object): Object} teams - MS Teams용 메시지 객체 생성 함수
+ * @property {function(Object): Object} jandi - JANDI용 메시지 객체 생성 함수
+ * @property {function(Object): Object} googleChat - Google Chat용 메시지 객체 생성 함수
  */
-function createMessageTeams(message) {
-  return {
-    type: "message",
-    summary: message,
-    attachments: [
-      {
-        contentType: "application/vnd.microsoft.card.adaptive",
-        contentUrl: null,
-        content: {
-          type: "AdaptiveCard",
-          body: [
-            {
-              type: "TextBlock",
-              wrap: true,
-              text: message,
-            },
-          ],
-          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-          version: "1.4",
+const MessageGenerator = {
+  /**
+   * 슬랙용 일반 메시지를 생성합니다.
+   * @param {string} message - 전송할 메시지 내용
+   * @returns {Object} 슬랙 메시지 객체
+   */
+  slack: (message) => {
+    return {
+      text: message,
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: message,
+          },
         },
-      },
-    ],
-  };
-}
-
-/*************************************************************************************************
- * 잔디(JANDI)용 뉴스 카드 및 메시지 레이아웃
- * ***********************************************************************************************/
-
-/**
- * 잔디용 뉴스 카드를 생성합니다.
- * @param {Object} params - 뉴스 항목 정보
- * @param {string} params.pubDateText - 발행일 텍스트
- * @param {string} params.title - 뉴스 제목
- * @param {string} params.source - 뉴스 출처
- * @param {string} params.description - 뉴스 설명
- * @param {string} params.link - 뉴스 링크 URL
- * @returns {Object} 잔디 메시지 카드 객체
- */
-function createArticleCardJandi({ pubDateText, title, source, description, link }) {
-  return {
-    body: "[" + title + "](" + link + ")\n" + source + " | " + pubDateText + "\n\n" + description,
-  };
-}
-
-/**
- * 잔디용 일반 메시지를 생성합니다.
- * @param {string} message - 전송할 메시지 내용
- * @returns {Object} 잔디 메시지 객체
- */
-function createMessageJandi(message) {
-  return {
-    body: message,
-  };
-}
-
-/*************************************************************************************************
- * 구글챗(Google Chat)용 뉴스 카드 및 메시지 레이아웃
- * ***********************************************************************************************/
-
-/**
- * 구글챗용 뉴스 카드를 생성합니다.
- * @param {Object} params - 뉴스 항목 정보
- * @param {string} params.pubDateText - 발행일 텍스트
- * @param {string} params.title - 뉴스 제목
- * @param {string} params.source - 뉴스 출처
- * @param {string} params.description - 뉴스 설명
- * @param {string} params.link - 뉴스 링크 URL
- * @returns {Object} 구글챗 메시지 카드 객체
- */
-function createArticleCardGoogle({ pubDateText, title, source, description, link }) {
-  return {
-    fallbackText: "[" + source + "] " + title,
-    cards: [
-      {
-        header: {
-          title: title,
+        {
+          type: "divider",
         },
-        sections: [
-          {
-            header: source,
-            widgets: [
+      ],
+    };
+  },
+
+  /**
+   * 팀즈용 일반 메시지를 생성합니다.
+   * @param {string} message - 전송할 메시지 내용
+   * @returns {Object} 팀즈 메시지 객체
+   */
+  teams: (message) => {
+    return {
+      type: "message",
+      summary: message,
+      attachments: [
+        {
+          contentType: "application/vnd.microsoft.card.adaptive",
+          contentUrl: null,
+          content: {
+            type: "AdaptiveCard",
+            body: [
               {
-                textParagraph: {
-                  text: description,
-                },
-              },
-              {
-                keyValue: {
-                  content: pubDateText,
-                  icon: "DESCRIPTION",
-                  onClick: {
-                    openLink: {
-                      url: link,
-                    },
-                  },
-                  button: {
-                    textButton: {
-                      text: "기사보기",
-                      onClick: {
-                        openLink: {
-                          url: link,
-                        },
-                      },
-                    },
-                  },
-                },
+                type: "TextBlock",
+                wrap: true,
+                text: message,
               },
             ],
+            $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+            version: "1.4",
           },
-        ],
-      },
-    ],
-  };
-}
+        },
+      ],
+    };
+  },
 
-/**
- * 구글챗용 일반 메시지를 생성합니다.
- * @param {string} message - 전송할 메시지 내용
- * @returns {Object} 구글챗 메시지 객체
- */
-function createMessageGoogle(message) {
-  return {
-    text: message,
-  };
-}
+  /**
+   * 잔디용 일반 메시지를 생성합니다.
+   * @param {string} message - 전송할 메시지 내용
+   * @returns {Object} 잔디 메시지 객체
+   */
+  jandi: (message) => {
+    return {
+      body: message,
+    };
+  },
+
+  /**
+   * 구글챗용 일반 메시지를 생성합니다.
+   * @param {string} message - 전송할 메시지 내용
+   * @returns {Object} 구글챗 메시지 객체
+   */
+  googleChat: (message) => {
+    return {
+      text: message,
+    };
+  },
+};
 
 /*************************************************************************************************
  * 초기 설정 완료시 안내 메시지
