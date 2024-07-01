@@ -60,19 +60,3 @@ const CONFIG = {
     TARGET_CELL       : "",
   },
 };
-
-/**
- * getConfig: 뉴스봇 구동에 필요한 설정값을 불변 객체 포맷으로 변환하여 반환합니다.
- *
- * @returns {Object} 뉴스봇 전역 설정값 객체
- */
-function getConfig() {
-  const propNames = Object.getOwnPropertyNames(CONFIG);
-
-  propNames.forEach((name) => {
-    let value = CONFIG[name];
-    CONFIG[name] = value && typeof value === "object" ? getConfig(value) : value;
-  });
-
-  return Object.freeze(CONFIG);
-}
