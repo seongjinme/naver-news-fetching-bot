@@ -225,3 +225,100 @@ class NewsSourceFinder {
     return subpathIndex;
   }
 }
+
+/**
+ * 다양한 채널로 메시지와 뉴스 아이템을 전송하는 서비스 클래스입니다.
+ */
+class MessagingService {
+  /**
+   * MessagingService 클래스의 생성자입니다.
+   * @param {Object} params - 설정 객체
+   * @param {Object.<string, string>} params.webhooks - 채널별 웹훅 URL 객체
+   * @param {Object} params.newsCardGenerator - 뉴스 카드 생성기 객체
+   * @param {Object} params.messageGenerator - 메시지 생성기 객체
+   */
+  constructor({ webhooks, newsCardGenerator, messageGenerator }) {
+    this._webhooks = { ...webhooks };
+    this._newsCardGenerator = newsCardGenerator;
+    this._messageGenerator = messageGenerator;
+    this._defaultParams = {
+      method: "post",
+      contentType: "application/json",
+    };
+  }
+
+  /**
+   * 여러 채널로 뉴스 아이템들을 전송합니다.
+   * @param {Array<Object>} newsItems - 전송할 뉴스 아이템 배열
+   */
+  sendNewsItems(newsItems) {
+    Object.entries(this._webhooks).forEach(([channel, webhookUrl]) => {
+      this._sendNewsItemsToChannel({ channel, webhookUrl, newsItems });
+    });
+  }
+
+  /**
+   * 특정 채널로 뉴스 아이템들을 전송합니다.
+   * @param {Object} params - 매개변수 객체
+   * @param {string} params.channel - 채널 이름
+   * @param {string} params.webhookUrl - 웹훅 URL
+   * @param {Array<Object>} params.newsItems - 전송할 뉴스 아이템 배열
+   * @private
+   */
+  _sendNewsItemsToChannel({ channel, webhookUrl, newsItems }) {
+    const params = { ...this._defaultParams };
+
+    newsItems.forEach((newsItem) => {
+      params.payload = JSON.stringify(
+        this._newsCardGenerator[CHANNEL_METHOD_NAME[channel]](newsItem.data),
+      );
+
+      if (channel === "JANDI") {
+        params.header = {
+          Accept: "application/vnd.tosslab.jandi-v2+json",
+        };
+      }
+
+      const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
+      if (fetchResponse.getResponseCode() !== 200) {
+        throw new Error(fetchResponse.getContentText());
+      }
+    });
+  }
+
+  /**
+   * 여러 채널로 메시지를 전송합니다.
+   * @param {string} message - 전송할 메시지
+   */
+  sendMessage(message) {
+    Object.entries(this._webhooks).forEach(([channel, webhookUrl]) => {
+      this._sendMessageToChannel({ channel, webhookUrl, message });
+    });
+  }
+
+  /**
+   * 특정 채널로 메시지를 전송합니다.
+   * @param {Object} params - 매개변수 객체
+   * @param {string} params.channel - 채널 이름
+   * @param {string} params.webhookUrl - 웹훅 URL
+   * @param {string} params.message - 전송할 메시지
+   * @private
+   */
+  _sendMessageToChannel({ channel, webhookUrl, message }) {
+    const params = {
+      ...this._defaultParams,
+      payload: JSON.stringify(this._messageGenerator[CHANNEL_METHOD_NAME[channel]](message)),
+    };
+
+    if (channel === "JANDI") {
+      params.header = {
+        Accept: "application/vnd.tosslab.jandi-v2+json",
+      };
+    }
+
+    const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
+    if (fetchResponse.getResponseCode() !== 200) {
+      throw new Error(fetchResponse.getContentText());
+    }
+  }
+}
