@@ -32,6 +32,11 @@ class NewsFetchService {
   fetchSingleNewsItem(searchKeyword) {
     const fetchUrl = this._createFetchUrl({ searchKeyword, display: 1 });
     const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
+
+    if (fetchedData.getResponseCode() !== 200) {
+      throw new Error(fetchedData.getContentText());
+    }
+
     const fetchedNewsItem = JSON.parse(fetchedData).items[0];
 
     return this._createNewsItem(fetchedNewsItem);
@@ -59,6 +64,7 @@ class NewsFetchService {
    * @param {string} params.searchKeyword - 검색어
    * @param {Date} params.lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
    * @param {number} params.maxItems - 가져올 뉴스 항목 숫자의 최대치
+   * @private
    */
   _fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems }) {
     let startIndex = 1;
@@ -89,6 +95,7 @@ class NewsFetchService {
    * 뉴스 항목 객체를 생성합니다.
    * @param {Object} newsItem - API로부터 받아온 뉴스 항목 데이터
    * @returns {NewsItem} 생성된 NewsItem 객체
+   * @private
    */
   _createNewsItem(newsItem) {
     return new NewsItem({
@@ -107,6 +114,7 @@ class NewsFetchService {
    * @param {number} [params.startIndex=1] - 검색 시작 인덱스
    * @param {number} [params.display=50] - 한 번에 가져올 뉴스 항목 수
    * @returns {string} 생성된 API 요청 URL
+   * @private
    */
   _createFetchUrl({ searchKeyword, startIndex = 1, display = 50 }) {
     const searchParams = new URLSearchParams({
@@ -153,6 +161,7 @@ class NewsSourceFinder {
    * URL에서 도메인을 추출하여 반환합니다.
    * @param {string} url - 도메인을 추출할 URL
    * @returns {string|null} 추출된 도메인 (도메인이 없는 경우 null 반환)
+   * @private
    */
   _extractDomain(url) {
     const address = url
@@ -170,6 +179,7 @@ class NewsSourceFinder {
    * 이진 탐색을 사용하여 뉴스 소스의 인덱스를 찾습니다.
    * @param {string} url - 도메인을 탐색할 URL
    * @returns {number} 찾은 뉴스 소스의 인덱스 (찾지 못한 경우 -1 반환)
+   * @private
    */
   _findSourceIndex(url) {
     let left = 0;
@@ -181,7 +191,7 @@ class NewsSourceFinder {
       const sourceUrl = source[0];
 
       if (url.startsWith(sourceUrl)) {
-        return this.findSubpathIndex({ url, index: mid });
+        return this._findSubpathIndex({ url, index: mid });
       }
 
       if (url < sourceUrl) {
@@ -200,8 +210,9 @@ class NewsSourceFinder {
    * @param {string} params.url - 검색할 URL
    * @param {number} params.index - 시작 인덱스
    * @returns {number} 최종 뉴스 소스의 인덱스
+   * @private
    */
-  findSubpathIndex({ url, index }) {
+  _findSubpathIndex({ url, index }) {
     let subpathIndex = index;
 
     while (
