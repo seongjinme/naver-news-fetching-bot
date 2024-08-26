@@ -9,7 +9,6 @@
  * 각 메신저별 뉴스 전송용 메시지 카드 레이아웃을 생성하는 유틸리티 객체입니다.
  * @typedef {Object} NewsCardGenerator
  * @property {function(Object): Object} slack - Slack용 뉴스 카드 객체 생성 함수
- * @property {function(Object): Object} teams - MS Teams용 뉴스 카드 객체 생성 함수
  * @property {function(Object): Object} jandi - JANDI용 뉴스 카드 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 뉴스 카드 객체 생성 함수
  */
@@ -77,88 +76,6 @@ const NewsCardGenerator = {
         },
         {
           type: "divider",
-        },
-      ],
-    };
-  },
-
-  /**
-   * 팀즈용 뉴스 카드를 생성합니다.
-   * @param {Object} params - 뉴스 항목 정보
-   * @param {string} params.title - 뉴스 제목
-   * @param {string} params.link - 뉴스 링크 URL
-   * @param {string} params.source - 뉴스 출처
-   * @param {string} params.description - 뉴스 설명
-   * @param {string} params.pubDateText - 발행일 텍스트
-   * @param {Array<string>} params.keywords - 뉴스에 해당하는 검색어 목록
-   * @returns {Object} 팀즈 메시지 카드 객체
-   */
-  teams: ({ title, link, source, description, pubDateText, keywords }) => {
-    return {
-      type: "message",
-      summary: `[${source}] ${title}`,
-      attachments: [
-        {
-          contentType: "application/vnd.microsoft.card.adaptive",
-          contentUrl: null,
-          content: {
-            type: "AdaptiveCard",
-            body: [
-              {
-                type: "TextBlock",
-                text: title,
-                weight: "Bolder",
-                size: "Large",
-                wrap: true,
-                width: "stretch",
-              },
-              {
-                type: "ColumnSet",
-                columns: [
-                  {
-                    type: "Column",
-                    items: [
-                      {
-                        type: "TextBlock",
-                        text: source,
-                        weight: "Bolder",
-                        wrap: true,
-                      },
-                      {
-                        type: "TextBlock",
-                        spacing: "None",
-                        text: pubDateText,
-                        isSubtle: true,
-                        wrap: true,
-                      },
-                    ],
-                    width: "stretch",
-                  },
-                ],
-              },
-              {
-                type: "TextBlock",
-                text: description,
-                wrap: true,
-                width: "stretch",
-              },
-              {
-                type: "TextBlock",
-                text: `**검색어 :** ${keywords.join(", ")}`,
-                wrap: true,
-                size: "Small",
-              },
-            ],
-            actions: [
-              {
-                type: "Action.OpenUrl",
-                url: link,
-                title: "기사보기",
-              },
-            ],
-            $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-            version: "1.4",
-          },
         },
       ],
     };
@@ -240,7 +157,6 @@ const NewsCardGenerator = {
  * 각 메신저별 뉴스 전송용 메시지 카드 레이아웃을 생성하는 유틸리티 객체입니다.
  * @typedef {Object} MessageGenerator
  * @property {function(Object): Object} slack - Slack용 메시지 객체 생성 함수
- * @property {function(Object): Object} teams - MS Teams용 메시지 객체 생성 함수
  * @property {function(Object): Object} jandi - JANDI용 메시지 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 메시지 객체 생성 함수
  */
@@ -263,36 +179,6 @@ const MessageGenerator = {
         },
         {
           type: "divider",
-        },
-      ],
-    };
-  },
-
-  /**
-   * 팀즈용 일반 메시지를 생성합니다.
-   * @param {string} message - 전송할 메시지 내용
-   * @returns {Object} 팀즈 메시지 객체
-   */
-  teams: (message) => {
-    return {
-      type: "message",
-      summary: message,
-      attachments: [
-        {
-          contentType: "application/vnd.microsoft.card.adaptive",
-          contentUrl: null,
-          content: {
-            type: "AdaptiveCard",
-            body: [
-              {
-                type: "TextBlock",
-                wrap: true,
-                text: message,
-              },
-            ],
-            $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-            version: "1.4",
-          },
         },
       ],
     };

@@ -9,14 +9,6 @@
 3. 같은 화면 하단의 `Add New Webhook to Workspace` 버튼을 누른 뒤, 뉴스를 전송할 Slack 채널 또는 사용자를 지정하고 `허용(Allow)` 버튼을 누릅니다.<p><img src="../static/images/slack_webhook_create.png" width="500" alt="Add new webhook in Slack workspace"></p>
 4. 다시 돌아온 화면의 하단에 표시된 `Webhook URL`을 복사하여 `Code.gs`의 `globalVariables()`에 위치한 설정값에 붙여넣습니다.
 
-## 팀즈(Microsoft Teams)
-
-1. PC에서 뉴스를 받아보실 팀 채널에 접속하신 상태로 우측 상단의 `...` 버튼을 누르신 뒤 `커넥터`를 선택합니다.<p><img src="../static/images/teams_connector.png" width="500" alt="Select 'Connector' in Teams channel"></p>
-2. 커넥터 목록에서 `Incoming Webhook` 항목을 찾아 `추가`를 누르고, 상세 설명이 나오는 모달 화면에서 다시 `추가`를 누릅니다.<p><img src="../static/images/teams_connector_webhook.png" alt="Add Incoming Webhook connector in Teams"></p>
-3. 1번 과정을 다시 반복한 뒤, 커넥터 목록에서 `Incoming Webhook` 항목의 `구성`을 누릅니다.
-4. 뉴스봇의 이름과 프로필 사진을 정하신 뒤 `만들기` 버튼을 누릅니다.<p><img src="../static/images/teams_webhook_create.png" alt="Add new incoming webhook in Teams"></p>
-5. 생성된 `Webhook URL`을 복사하여 `Code.gs`의 `globalVariables()`에 위치한 설정값에 붙여넣습니다.
-
 ## 잔디(JANDI)
 
 1. PC로 잔디에 로그인하신 상태에서 우측 최상단 버튼을 누르고 `잔디 커넥트`로 이동합니다.<p><img src="../static/images/jandi_connect.png" width="500" alt="Select 'Connector' in JANDI"></p>

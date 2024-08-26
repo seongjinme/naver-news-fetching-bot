@@ -1,6 +1,6 @@
 # Naver News Fetching Bot (네이버 뉴스 봇)
 
-"Naver News Fetching Bot"은 원하는 검색어가 포함된 최신 네이버 뉴스를 슬랙(Slack), 팀즈(Microsoft Teams), 잔디(Jandi) 또는 구글챗(Google Chat)으로 전송하는 Google Apps Script 기반 서버리스 뉴스봇입니다. 네이버 오픈 API와 Google Apps Script의 트리거 기능, 그리고 Google의 Sheets API를 이용하여 네이버 뉴스의 실시간 모니터링 및 아카이빙 업무를 자동화 합니다.
+"Naver News Fetching Bot"은 원하는 검색어가 포함된 최신 네이버 뉴스를 슬랙(Slack), 잔디(Jandi) 또는 구글챗(Google Chat)으로 전송하는 Google Apps Script 기반 서버리스 뉴스봇입니다. 네이버 오픈 API와 Google Apps Script의 트리거 기능, 그리고 Google의 Sheets API를 이용하여 네이버 뉴스의 실시간 모니터링 및 아카이빙 업무를 자동화 합니다.
 
 - 원하는 키워드가 포함된 최신 네이버 뉴스를 공용 채팅방에 자동으로 전송합니다.
 - 공유된 뉴스 항목을 Google Sheets 문서에 자동으로 아카이빙 합니다. 이 기능은 필요에 따라 켜고 끌 수 있습니다.
@@ -56,7 +56,6 @@
 뉴스를 받아보실 채팅 플랫폼에서 이용할 Incoming Webhook을 생성하신 뒤 해당 URL을 `Code.gs`의 `globalVariables()`에 위치한 설정값에 붙여넣으셔야 합니다. 플랫폼별 상세 방법은 아래 링크를 통해 확인해주세요.
 
 - [슬랙(Slack)](./docs/GUIDE_WEBHOOK.md#%EC%8A%AC%EB%9E%99slack)
-- [팀즈(Microsoft Teams)](./docs/GUIDE_WEBHOOK.md#%ED%8C%80%EC%A6%88microsoft-teams)
 - [잔디(JANDI)](./docs/GUIDE_WEBHOOK.md#%EC%9E%94%EB%94%94jandi)
 - [구글챗(Google Chat)](./docs/GUIDE_WEBHOOK.md#%EA%B5%AC%EA%B8%80%EC%B1%97google-chat)
 

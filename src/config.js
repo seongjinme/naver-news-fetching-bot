@@ -21,7 +21,6 @@ const CONFIG = {
    *                    사용하지 않는 서비스일 경우 빈 칸("")으로 입력해 주세요.
    *                    모든 서비스가 빈 칸("")으로 설정되었을 경우, 채팅 서비스로의 뉴스 전송 기능은 OFF로 설정됩니다.
    *   - SLACK        : Slack Workspace 공간에 설정된 웹훅 URL 주소
-   *   - TEAMS        : Microsoft Teams에 설정된 웹훅 URL 주소
    *   - JANDI        : 잔디 채널에 설정된 웹훅 URL 주소
    *   - GOOGLE_CHAT  : Google Chat Space에 설정된 웹훅 URL 주소
    *
@@ -48,7 +47,6 @@ const CONFIG = {
   // 뉴스 항목을 전송할 채팅 서비스별 웹훅 주소
   WEBHOOK_URL         : {
     SLACK             : "",
-    TEAMS             : "",
     JANDI             : "",
     GOOGLE_CHAT       : "",
   },
