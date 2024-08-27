@@ -322,3 +322,103 @@ class MessagingService {
     }
   }
 }
+
+/**
+ * 뉴스 아이템을 구글 시트에 저장하는 서비스 클래스입니다.
+ */
+class ArchivingService {
+  /**
+   * ArchivingService 클래스의 생성자입니다.
+   * @param {Object} params - 생성자 매개변수
+   * @param {Object} params.config - 구글 시트 설정 정보
+   * @param {string} params.config.ID - 스프레드시트 ID
+   * @param {string} params.config.NAME - 워크시트 이름
+   */
+  constructor({ config }) {
+    this._config = { ...config };
+    this._spreadSheet = this._getSpreadSheet(this._config.ID);
+    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME);
+    this._workSheetTargetCell = `${this._config.NAME}!A2`;
+  }
+
+  /**
+   * 스프레드시트 객체를 가져옵니다.
+   * @param {string} spreadSheetId - 스프레드시트 ID
+   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} 스프레드시트 객체
+   * @private
+   */
+  _getSpreadSheet(spreadSheetId) {
+    try {
+      return SpreadsheetApp.openById(spreadSheetId);
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  /**
+   * 워크시트를 가져오거나 새로 생성합니다.
+   * @param {string} workSheetName - 워크시트 이름
+   * @returns {GoogleAppsScript.Spreadsheet.Sheet} 워크시트 객체
+   * @private
+   */
+  _getOrCreateWorkSheet(workSheetName) {
+    const existingSheet = this._spreadSheet.getSheetByName(workSheetName);
+    if (existingSheet) {
+      return existingSheet;
+    }
+    return this._createNewWorkSheet(workSheetName);
+  }
+
+  /**
+   * 새 워크시트를 생성합니다.
+   * @param {string} workSheetName - 생성할 워크시트 이름
+   * @returns {GoogleAppsScript.Spreadsheet.Sheet} 새로 생성된 워크시트 객체
+   * @private
+   */
+  _createNewWorkSheet(workSheetName) {
+    try {
+      const newWorkSheet = this._spreadSheet.insertSheet(workSheetName, 1);
+
+      const headerRange = Sheets.newValueRange();
+      headerRange.values = [["날짜/시각", "제목", "매체명", "URL", "내용"]];
+      const headerTargetCell = `${workSheetName}!A1`;
+
+      Sheets.Spreadsheets.Values.update(headerRange, this._spreadSheet.getId(), headerTargetCell, {
+        valueInputOption: "RAW",
+      });
+
+      return newWorkSheet;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  /**
+   * 뉴스 아이템을 구글 시트에 저장합니다.
+   * @param {Object} newsItem - 저장할 뉴스 아이템 데이터
+   * @param {string} newsItem.title - 뉴스 제목
+   * @param {string} newsItem.link - 뉴스 링크
+   * @param {string} newsItem.source - 뉴스 출처
+   * @param {string} newsItem.description - 뉴스 설명
+   * @param {string} newsItem.pubDateText - 발행일 텍스트
+   * @param {string[]} newsItem.keywords - 키워드 배열
+   */
+  archiveNewsItem({ pubDateText, title, source, link, description, keywords }) {
+    try {
+      this._workSheet.insertRowBefore(2);
+      const valueRange = Sheets.newValueRange();
+      valueRange.values = [[pubDateText, title, source, link, description, keywords.join(", ")]];
+
+      Sheets.Spreadsheets.Values.update(
+        valueRange,
+        this._spreadSheet.getId(),
+        this._workSheetTargetCell,
+        {
+          valueInputOption: "USER_ENTERED",
+        },
+      );
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+}
