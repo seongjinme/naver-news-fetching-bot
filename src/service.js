@@ -38,17 +38,12 @@ class NewsFetchService {
 
   /**
    * 검색어들이 포함된 최신 뉴스 항목들을 가져옵니다.
-   * @param {Object} params - 매개변수
-   * @param {Array<string>} params.searchKeywords - 검색어 목록
-   * @param {Date} params.lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
+   * @param {Array<string>} searchKeywords - 검색어 목록
    * @returns {Array<NewsItem>} 새로 가져온 뉴스 항목들
    */
-  fetchNewsItems({ searchKeywords, lastNewsItemPubDate }) {
+  fetchNewsItems(searchKeywords) {
     searchKeywords.forEach((searchKeyword) => {
-      this._fetchNewsItemsForEachKeyword({
-        searchKeyword,
-        lastNewsItemPubDate,
-      });
+      this._fetchNewsItemsForEachKeyword(searchKeyword);
     });
 
     return this._newsItemMap.newsItems;
@@ -56,21 +51,13 @@ class NewsFetchService {
 
   /**
    * 단일 검색어에 대한 뉴스 항목들을 가져옵니다.
-   * @param {Object} params - 매개변수
-   * @param {string} params.searchKeyword - 검색어
-   * @param {Date} params.lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
+   * @param {string} searchKeyword - 검색어
    * @private
    */
-  _fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate }) {
+  _fetchNewsItemsForEachKeyword(searchKeyword) {
     const fetchUrl = this._createFetchUrl({ searchKeyword });
     const fetchedData = this._fetchDataFromAPI(fetchUrl);
-
-    const newsItems = JSON.parse(fetchedData).items.reduce((acc, item) => {
-      if (new Date(item.pubDate) >= lastNewsItemPubDate) {
-        acc.push(this._createNewsItem(item));
-      }
-      return acc;
-    }, []);
+    const newsItems = fetchedData.items.map((item) => this._createNewsItem(item));
 
     this._newsItemMap.addNewsItems(newsItems);
   }

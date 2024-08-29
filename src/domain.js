@@ -114,10 +114,12 @@ class NewsItemMap {
   /**
    * NewsItemMap 클래스의 생성자입니다.
    * @param {Array<string>} lastFetchedNewsItems - 이전에 가져온 뉴스 항목들의 해시 ID 배열
+   * @param {Date} lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
    */
-  constructor(lastFetchedNewsItems) {
+  constructor({ lastFetchedNewsItems, lastNewsItemPubDate }) {
     this._newsItemsMap = new Map();
     this._lastFetchedNewsItems = lastFetchedNewsItems;
+    this._lastNewsItemPubDate = lastNewsItemPubDate;
   }
 
   /**
@@ -125,7 +127,11 @@ class NewsItemMap {
    * @param {NewsItem} newsItem - 추가할 뉴스 항목
    */
   _addNewsItem(newsItem) {
-    if (this._lastFetchedNewsItems.includes(newsItem.hashId)) return;
+    if (
+      this._lastFetchedNewsItems.includes(newsItem.hashId) ||
+      !newsItem.isAfterLastUpdate({ lastUpdateTime: this._lastNewsItemPubDate })
+    )
+      return;
 
     const existingItem = this._newsItemsMap.get(newsItem.hashId);
     if (existingItem) {
