@@ -142,7 +142,6 @@ class NewsItemMap {
    */
   addNewsItems(newsItems) {
     newsItems.forEach((newsItem) => this._addNewsItem(newsItem));
-    return this.newsItems;
   }
 
   /**

@@ -30,16 +30,10 @@ class NewsFetchService {
    * @returns {NewsItem} 새로 가져온 뉴스 항목들
    */
   fetchSingleNewsItem(searchKeyword) {
-    const fetchedData = UrlFetchApp.fetch(
-      this._createFetchUrl({ searchKeyword, display: 1 }),
-      this._fetchOptions,
-    );
+    const fetchUrl = this._createFetchUrl({ searchKeyword, display: 1 });
+    const fetchedData = this._fetchDataFromAPI(fetchUrl);
 
-    if (fetchedData.getResponseCode() !== 200) {
-      throw new Error(fetchedData.getContentText());
-    }
-
-    return this._createNewsItem(JSON.parse(fetchedData).items[0]);
+    return this._createNewsItem(fetchedData.items[0]);
   }
 
   /**
@@ -47,12 +41,14 @@ class NewsFetchService {
    * @param {Object} params - 매개변수
    * @param {Array<string>} params.searchKeywords - 검색어 목록
    * @param {Date} params.lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
-   * @param {number} [params.maxItems=100] - 가져올 뉴스 항목 숫자의 최대치
    * @returns {Array<NewsItem>} 새로 가져온 뉴스 항목들
    */
-  fetchNewsItems({ searchKeywords, lastNewsItemPubDate, maxItems = 100 }) {
+  fetchNewsItems({ searchKeywords, lastNewsItemPubDate }) {
     searchKeywords.forEach((searchKeyword) => {
-      this._fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems });
+      this._fetchNewsItemsForEachKeyword({
+        searchKeyword,
+        lastNewsItemPubDate,
+      });
     });
 
     return this._newsItemMap.newsItems;
@@ -63,40 +59,41 @@ class NewsFetchService {
    * @param {Object} params - 매개변수
    * @param {string} params.searchKeyword - 검색어
    * @param {Date} params.lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
-   * @param {number} params.maxItems - 가져올 뉴스 항목 숫자의 최대치
    * @private
    */
-  _fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems }) {
-    let startIndex = 1;
+  _fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate }) {
+    const fetchUrl = this._createFetchUrl({ searchKeyword });
+    const fetchedData = this._fetchDataFromAPI(fetchUrl);
 
-    while (true) {
-      const fetchedData = UrlFetchApp.fetch(
-        this._createFetchUrl({ searchKeyword, startIndex }),
-        this._fetchOptions,
-      );
-
-      if (fetchedData.getResponseCode() !== 200) {
-        throw new Error(fetchedData.getContentText());
+    const newsItems = JSON.parse(fetchedData).items.reduce((acc, item) => {
+      if (new Date(item.pubDate) >= lastNewsItemPubDate) {
+        acc.push(this._createNewsItem(item));
       }
+      return acc;
+    }, []);
 
-      const newsItems = JSON.parse(fetchedData).items.reduce((acc, item) => {
-        if (new Date(item.pubDate) >= lastNewsItemPubDate) {
-          acc.push(this._createNewsItem(item));
-        }
-        return acc;
-      }, []);
+    this._newsItemMap.addNewsItems(newsItems);
+  }
 
-      const currentTotalNewsItems = this._newsItemMap.addNewsItems(newsItems);
-
-      if (currentTotalNewsItems.length >= maxItems || newsItems.length < 50) break;
-
-      startIndex += 50;
+  /**
+   * API에서 데이터를 가져오고 파싱합니다.
+   * @param {string} fetchUrl - API 요청 URL
+   * @returns {Object} 파싱된 JSON 응답 데이터
+   * @throws {Error} API 요청이 실패하거나 응답 코드가 200이 아닐 경우
+   * @private
+   */
+  _fetchDataFromAPI(fetchUrl) {
+    const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
+    if (fetchedData.getResponseCode() !== 200) {
+      throw new Error(fetchedData.getContentText());
     }
+
+    return JSON.parse(fetchedData);
   }
 
   /**
    * 뉴스 항목 객체를 생성합니다.
-   * @param {Object} newsItem - API로부터 받아온 뉴스 항목 데이터
+   * @param {Object} newsItem - API로부터 å받아온 뉴스 항목 데이터
    * @returns {NewsItem} 생성된 NewsItem 객체
    * @private
    */
@@ -115,11 +112,11 @@ class NewsFetchService {
    * @param {Object} params - 매개변수
    * @param {string} params.searchKeyword - 검색어
    * @param {number} [params.startIndex=1] - 검색 시작 인덱스
-   * @param {number} [params.display=50] - 한 번에 가져올 뉴스 항목 수
+   * @param {number} [params.display=100] - 한 번에 가져올 뉴스 항목 수
    * @returns {string} 생성된 API 요청 URL
    * @private
    */
-  _createFetchUrl({ searchKeyword, startIndex = 1, display = 50 }) {
+  _createFetchUrl({ searchKeyword, startIndex = 1, display = 100 }) {
     const searchParams = new URLSearchParams({
       query: encodeURIComponent(searchKeyword),
       start: startIndex,
