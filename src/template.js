@@ -217,7 +217,7 @@ const MessageGenerator = {
  * @returns {string} 초기 설정 완료 안내 메시지
  */
 function createWelcomeMessage(searchKeywords) {
-  return `"[Naver News Fetching Bot 설치 완료]\n\n네이버 뉴스 봇이 설치되었습니다. 앞으로 '${searchKeywords.join(", ")}' 키워드에 대한 최신 뉴스가 주기적으로 전송됩니다.`;
+  return `"[네이버 뉴스 봇 설치 완료]\n\n앞으로 '${searchKeywords.join(", ")}' 키워드에 대한 최신 뉴스가 주기적으로 전송됩니다.`;
 }
 
 /*************************************************************************************************
@@ -231,5 +231,5 @@ function createWelcomeMessage(searchKeywords) {
  * @returns {string} 검색 키워드 변경 안내 메시지
  */
 function createKeywordsChangedMessage(before, after) {
-  return `[Naver News Fetching Bot 키워드 변경 완료]\n\n네이버 뉴스 봇의 검색 키워드가 '${before}'에서 '${after}'로 변경되었습니다.`;
+  return `[네이버 뉴스 봇 키워드 변경 완료]\n\n뉴스 검색 키워드가 '${before}'에서 '${after}'로 변경되었습니다.`;
 }
