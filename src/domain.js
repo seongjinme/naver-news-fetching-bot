@@ -63,7 +63,7 @@ class NewsItem {
 
   /**
    * 뉴스 기사에 대한 검색 키워드를 추가합니다.
-   * @param {Array<string>} keywords - 추가할 검색 키워드 항목
+   * @param {string[]} keywords - 추가할 검색 키워드 항목
    */
   addSearchKeyword(keywords) {
     this._keywords = [...this._keywords, ...keywords];
@@ -79,7 +79,7 @@ class NewsItem {
 
   /**
    * 뉴스 기사에 대한 검색 키워드 목록을 반환합니다.
-   * @returns {Array<string>} 뉴스 기사의 검색 키워드 목록
+   * @returns {string[]} 뉴스 기사의 검색 키워드 목록
    */
   get keywords() {
     return [...this._keywords];
@@ -101,7 +101,7 @@ class NewsItem {
    * @property {string} source - 기사 출처
    * @property {string} description - 기사 설명
    * @property {string} pubDateText - 기사 발행일 문자열
-   * @property {Array<string>} keywords - 기사 검색어 목록
+   * @property {string[]} keywords - 기사 검색어 목록
    */
   get data() {
     return {
@@ -121,7 +121,7 @@ class NewsItem {
 class NewsItemMap {
   /**
    * NewsItemMap 클래스의 생성자입니다.
-   * @param {Array<string>} lastFetchedNewsItems - 이전에 가져온 뉴스 항목들의 해시 ID 배열
+   * @param {string[]} lastFetchedNewsItems - 이전에 가져온 뉴스 항목들의 해시 ID 배열
    * @param {Date} lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
    */
   constructor({ lastFetchedNewsItems, lastNewsItemPubDate }) {

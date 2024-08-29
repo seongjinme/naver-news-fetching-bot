@@ -21,7 +21,7 @@ const NewsCardGenerator = {
    * @param {string} params.source - 뉴스 출처
    * @param {string} params.description - 뉴스 설명
    * @param {string} params.pubDateText - 발행일 텍스트
-   * @param {Array<string>} params.keywords - 뉴스에 해당하는 검색어 목록
+   * @param {string[]} params.keywords - 뉴스에 해당하는 검색어 목록
    * @returns {Object} 슬랙 메시지 카드 객체
    */
   slack: ({ title, link, source, description, pubDateText, keywords }) => {
@@ -89,7 +89,7 @@ const NewsCardGenerator = {
    * @param {string} params.source - 뉴스 출처
    * @param {string} params.description - 뉴스 설명
    * @param {string} params.pubDateText - 발행일 텍스트
-   * @param {Array<string>} params.keywords - 뉴스에 해당하는 검색어 목록
+   * @param {string[]} params.keywords - 뉴스에 해당하는 검색어 목록
    * @returns {Object} 잔디 메시지 카드 객체
    */
   jandi: ({ title, link, source, description, pubDateText, keywords }) => {
@@ -213,7 +213,7 @@ const MessageGenerator = {
 
 /**
  * 초기 설정 완료 시 안내 메시지를 생성합니다.
- * @param {Array<string>} searchKeywords - 설정된 검색 키워드들
+ * @param {string[]} searchKeywords - 설정된 검색 키워드들
  * @returns {string} 초기 설정 완료 안내 메시지
  */
 function createWelcomeMessage(searchKeywords) {
@@ -226,8 +226,8 @@ function createWelcomeMessage(searchKeywords) {
 
 /**
  * 검색 키워드 변경 시 안내 메시지를 생성합니다.
- * @param {Array<string>} before - 변경 전 검색 키워드들
- * @param {Array<string>} after - 변경 후 검색 키워드들
+ * @param {string[]} before - 변경 전 검색 키워드들
+ * @param {string[]} after - 변경 후 검색 키워드들
  * @returns {string} 검색 키워드 변경 안내 메시지
  */
 function createKeywordsChangedMessage(before, after) {

@@ -9,7 +9,7 @@ class NewsFetchService {
    * @param {string} params.clientId - 네이버 API 클라이언트 ID
    * @param {string} params.clientSecret - 네이버 API 클라이언트 시크릿
    * @param {Object} params.newsSource - 뉴스 소스 목록
-   * @param {Array<string>} params.lastFetchedNewsItems - 가장 최근에 처리된 뉴스 항목들의 해시 ID 배열
+   * @param {string[]} params.lastFetchedNewsItems - 가장 최근에 처리된 뉴스 항목들의 해시 ID 배열
    */
   constructor({ apiUrl, clientId, clientSecret, newsSource, lastFetchedNewsItems }) {
     this._apiUrl = apiUrl;
@@ -38,7 +38,7 @@ class NewsFetchService {
 
   /**
    * 검색어들이 포함된 최신 뉴스 항목들을 가져옵니다.
-   * @param {Array<string>} searchKeywords - 검색어 목록
+   * @param {string[]} searchKeywords - 검색어 목록
    * @returns {NewsItem[]} 새로 가져온 뉴스 항목들
    */
   fetchNewsItems(searchKeywords) {
