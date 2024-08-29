@@ -31,9 +31,9 @@ class NewsFetchService {
    */
   fetchSingleNewsItem(searchKeyword) {
     const fetchUrl = this._createFetchUrl({ searchKeyword, display: 1 });
-    const fetchedData = this._fetchDataFromAPI(fetchUrl);
+    const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
 
-    return this._createNewsItem(fetchedData.items[0]);
+    return this._createNewsItem(fetchedNewsItems[0]);
   }
 
   /**
@@ -56,8 +56,8 @@ class NewsFetchService {
    */
   _fetchNewsItemsForEachKeyword(searchKeyword) {
     const fetchUrl = this._createFetchUrl({ searchKeyword });
-    const fetchedData = this._fetchDataFromAPI(fetchUrl);
-    const newsItems = fetchedData.items.map((item) => this._createNewsItem(item));
+    const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
+    const newsItems = fetchedNewsItems.map((item) => this._createNewsItem(item));
 
     this._newsItemMap.addNewsItems(newsItems);
   }
@@ -69,13 +69,13 @@ class NewsFetchService {
    * @throws {Error} API 요청이 실패하거나 응답 코드가 200이 아닐 경우
    * @private
    */
-  _fetchDataFromAPI(fetchUrl) {
+  _fetchNewsItemsFromAPI(fetchUrl) {
     const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
     if (fetchedData.getResponseCode() !== 200) {
       throw new Error(fetchedData.getContentText());
     }
 
-    return JSON.parse(fetchedData);
+    return JSON.parse(fetchedData).items;
   }
 
   /**
