@@ -256,9 +256,7 @@ class MessagingService {
     const params = { ...this._defaultParams };
 
     newsItems.forEach((newsItem) => {
-      params.payload = JSON.stringify(
-        this._newsCardGenerator[CHANNEL_METHOD_NAME[channel]](newsItem.data),
-      );
+      params.payload = JSON.stringify(this._newsCardGenerator[toCamelCase(channel)](newsItem.data));
 
       if (channel === "JANDI") {
         params.header = {
@@ -294,7 +292,7 @@ class MessagingService {
   _sendMessageToChannel({ channel, webhookUrl, message }) {
     const params = {
       ...this._defaultParams,
-      payload: JSON.stringify(this._messageGenerator[CHANNEL_METHOD_NAME[channel]](message)),
+      payload: JSON.stringify(this._messageGenerator[toCamelCase(channel)](message)),
     };
 
     if (channel === "JANDI") {

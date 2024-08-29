@@ -54,3 +54,12 @@ function getBleachedText(text) {
 
   return text;
 }
+
+/**
+ * UPPER_CASE로 작성된 텍스트를 camelCase로 수정합니다.
+ * @param {string} text - UPPER_CASE 텍스트
+ * @returns {string} camelCase 형식으로 수정된 텍스트
+ */
+function toCamelCase(text) {
+  return text.toLowerCase().replace(/_(.)/g, (_, c) => c.toUpperCase());
+}
