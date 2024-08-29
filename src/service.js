@@ -294,6 +294,20 @@ class MessagingService {
       throw new Error(fetchResponse.getContentText());
     }
   }
+
+  /**
+   * 전송 완료된 뉴스 기사들에 대한 정보를 반환합니다.
+   * @typedef {Object} DeliveredNewsItemsInfo
+   * @property {NewsItem[]} newsItems - 작업 완료된 뉴스 아이템들
+   * @property {Date} lastNewsPubDate - 마지막으로 작업 완료된 뉴스 기사의 게재 시각
+   * @returns {DeliveredNewsItemsInfo}
+   */
+  get deliveredNewsItemsInfo() {
+    return {
+      newsItems: [...this._deliveredNewsItems],
+      lastNewsPubDate: this._deliveredNewsItems[this._deliveredNewsItems.length - 1].pubDate,
+    };
+  }
 }
 
 /**
