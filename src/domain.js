@@ -9,7 +9,7 @@ class NewsItem {
    * @param {string} newsData.link - 기사 링크
    * @param {string} newsData.source - 기사 출처
    * @param {string} newsData.description - 기사 설명
-   * @param {Date} newsData.pubDate - 기사 발행일
+   * @param {Date} newsData.pubDate - 기사 게재 시각
    * @param {string} newsData.keyword - 기사 검색어
    */
   constructor({ title, link, source, description, pubDate, keyword }) {
@@ -83,6 +83,14 @@ class NewsItem {
    */
   get keywords() {
     return [...this._keywords];
+  }
+
+  /**
+   * 뉴스 기사가 게재된 시각을 반환합니다.
+   * @returns {Date} 뉴스 기사의 게재 시각
+   */
+  get pubDate() {
+    return this._pubDate;
   }
 
   /**
@@ -172,6 +180,18 @@ class NewsItemMap {
    */
   get size() {
     return this._newsItemsMap.size;
+  }
+
+  /**
+   * 맵에 저장된 뉴스 항목들로부터 가장 최근의 pubDate를 추출합니다.
+   * @returns {Date|null} 가장 최근의 pubDate, 만약 Map이 비어있을 경우는 null
+   */
+  get latestPubDate() {
+    if (this._newsItemsMap.size === 0) return null;
+    return [...this._newsItemsMap.values()].reduce(
+      (latest, newsItem) => (newsItem.pubDate > latest ? newsItem.pubDate : latest),
+      new Date(0),
+    );
   }
 
   /**
