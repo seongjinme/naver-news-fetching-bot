@@ -52,13 +52,13 @@ class NewsItem {
   /**
    * 뉴스 기사의 발행일이 지정된 시간 이후인지 확인합니다.
    * @param {Object} options - 비교 옵션
-   * @param {number} options.lastUpdateTime - 마지막 업데이트 시각(milliseconds)
+   * @param {Date} options.latestNewsItemPubDate - 마지막 업데이트 시각
    * @param {number} [options.subsetTime] - 부분 집합 시간 (선택적)
    * @returns {boolean} 뉴스 기사의 발행일이 지정된 시간 이후인 경우 true, 그렇지 않은 경우 false
    */
-  isAfterLastUpdate({ lastUpdateTime, subsetTime }) {
+  isAfterLatestNewsItem({ latestNewsItemPubDate, subsetTime }) {
     const subsetTimeAmount = subsetTime && !Number.isNaN(subsetTime) ? subsetTime : 0;
-    return this._pubDate.getTime() >= new Date(lastUpdateTime).getTime() - subsetTimeAmount;
+    return this._pubDate.getTime() >= latestNewsItemPubDate.getTime() - subsetTimeAmount;
   }
 
   /**
@@ -95,13 +95,14 @@ class NewsItem {
 
   /**
    * 뉴스 기사의 데이터를 반환합니다.
-   * @type {Object}
+   * @typedef {Object} NewsItemData
    * @property {string} title - 기사 제목
    * @property {string} link - 기사 링크
    * @property {string} source - 기사 출처
    * @property {string} description - 기사 설명
    * @property {string} pubDateText - 기사 발행일 문자열
    * @property {string[]} keywords - 기사 검색어 목록
+   * @returns {NewsItemData}
    */
   get data() {
     return {
@@ -137,7 +138,7 @@ class NewsItemMap {
   _addNewsItem(newsItem) {
     if (
       this._lastFetchedNewsItems.includes(newsItem.hashId) ||
-      !newsItem.isAfterLastUpdate({ lastUpdateTime: this._lastNewsItemPubDate })
+      !newsItem.isAfterLatestNewsItem({ latestNewsItemPubDate: this._lastNewsItemPubDate })
     )
       return;
 
@@ -170,7 +171,7 @@ class NewsItemMap {
    * 맵에 저장된 모든 뉴스 항목의 해시 ID를 배열로 반환합니다.
    * @returns {string[]} 모든 뉴스 항목의 해시 ID 배열
    */
-  get newsItemsHashIds() {
+  get newsHashIds() {
     return Array.from(this._newsItemsMap.keys());
   }
 
@@ -186,7 +187,7 @@ class NewsItemMap {
    * 맵에 저장된 뉴스 항목들로부터 가장 최근의 pubDate를 추출합니다.
    * @returns {Date|null} 가장 최근의 pubDate, 만약 Map이 비어있을 경우는 null
    */
-  get latestPubDate() {
+  get latestNewsPubDate() {
     if (this._newsItemsMap.size === 0) return null;
     return [...this._newsItemsMap.values()].reduce(
       (latest, newsItem) => (newsItem.pubDate > latest ? newsItem.pubDate : latest),
