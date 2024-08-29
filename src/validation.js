@@ -16,6 +16,9 @@ const Validation = {
     if (!Array.isArray(config.KEYWORDS) || config.KEYWORDS.length === 0) {
       throw new Error("검색어 목록(KEYWORDS)에는 최소 하나 이상의 검색어를 포함해야 합니다.");
     }
+    if (config.KEYWORDS.length > 5) {
+      throw new Error("검색어 목록(KEYWORDS)에 포함된 검색어는 최대 5개까지만 허용됩니다.");
+    }
     config.KEYWORDS.forEach((keyword, index) => {
       if (typeof keyword !== "string" || keyword.trim() === "") {
         throw new Error(
