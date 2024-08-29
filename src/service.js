@@ -39,7 +39,7 @@ class NewsFetchService {
   /**
    * 검색어들이 포함된 최신 뉴스 항목들을 가져옵니다.
    * @param {Array<string>} searchKeywords - 검색어 목록
-   * @returns {Array<NewsItem>} 새로 가져온 뉴스 항목들
+   * @returns {NewsItem[]} 새로 가져온 뉴스 항목들
    */
   fetchNewsItems(searchKeywords) {
     searchKeywords.forEach((searchKeyword) => {
@@ -236,7 +236,7 @@ class MessagingService {
 
   /**
    * 여러 채널로 뉴스 아이템들을 전송합니다.
-   * @param {Array<Object>} newsItems - 전송할 뉴스 아이템 배열
+   * @param {NewsItem[]} newsItems - 전송할 뉴스 아이템 배열
    */
   sendNewsItems(newsItems) {
     Object.entries(this._webhooks).forEach(([channel, webhookUrl]) => {
@@ -249,7 +249,7 @@ class MessagingService {
    * @param {Object} params - 매개변수 객체
    * @param {string} params.channel - 채널 이름
    * @param {string} params.webhookUrl - 웹훅 URL
-   * @param {Array<Object>} params.newsItems - 전송할 뉴스 아이템 배열
+   * @param {NewsItem[]} params.newsItems - 전송할 뉴스 아이템 배열
    * @private
    */
   _sendNewsItemsToChannel({ channel, webhookUrl, newsItems }) {
@@ -381,6 +381,16 @@ class ArchivingService {
   }
 
   /**
+   * 뉴스 아이템들을 구글 시트에 저장합니다.
+   * @param {NewsItem[]} newsItems - 저장할 뉴스 아이템들 데이터
+   */
+  archiveNewsItems(newsItems) {
+    newsItems.forEach((newsItem) => {
+      this._archiveNewsItem(newsItem.data);
+    });
+  }
+
+  /**
    * 뉴스 아이템을 구글 시트에 저장합니다.
    * @param {Object} newsItem - 저장할 뉴스 아이템 데이터
    * @param {string} newsItem.title - 뉴스 제목
@@ -390,7 +400,7 @@ class ArchivingService {
    * @param {string} newsItem.pubDateText - 발행일 텍스트
    * @param {string[]} newsItem.keywords - 키워드 배열
    */
-  archiveNewsItem({ pubDateText, title, source, link, description, keywords }) {
+  _archiveNewsItem({ pubDateText, title, source, link, description, keywords }) {
     try {
       this._workSheet.insertRowBefore(2);
       const valueRange = Sheets.newValueRange();
