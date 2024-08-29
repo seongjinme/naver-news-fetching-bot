@@ -30,16 +30,16 @@ class NewsFetchService {
    * @returns {NewsItem} 새로 가져온 뉴스 항목들
    */
   fetchSingleNewsItem(searchKeyword) {
-    const fetchUrl = this._createFetchUrl({ searchKeyword, display: 1 });
-    const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
+    const fetchedData = UrlFetchApp.fetch(
+      this._createFetchUrl({ searchKeyword, display: 1 }),
+      this._fetchOptions,
+    );
 
     if (fetchedData.getResponseCode() !== 200) {
       throw new Error(fetchedData.getContentText());
     }
 
-    const fetchedNewsItem = JSON.parse(fetchedData).items[0];
-
-    return this._createNewsItem(fetchedNewsItem);
+    return this._createNewsItem(JSON.parse(fetchedData).items[0]);
   }
 
   /**
@@ -68,26 +68,29 @@ class NewsFetchService {
    */
   _fetchNewsItemsForEachKeyword({ searchKeyword, lastNewsItemPubDate, maxItems }) {
     let startIndex = 1;
-    let totalFetched = 0;
 
-    while (totalFetched < maxItems) {
-      const fetchUrl = this._createFetchUrl({ searchKeyword, startIndex });
-      const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
+    while (true) {
+      const fetchedData = UrlFetchApp.fetch(
+        this._createFetchUrl({ searchKeyword, startIndex }),
+        this._fetchOptions,
+      );
 
       if (fetchedData.getResponseCode() !== 200) {
         throw new Error(fetchedData.getContentText());
       }
 
-      const newsItems = JSON.parse(fetchedData)
-        .items.filter((item) => new Date(item.pubDate) >= lastNewsItemPubDate)
-        .map((item) => this._createNewsItem(item));
+      const newsItems = JSON.parse(fetchedData).items.reduce((acc, item) => {
+        if (new Date(item.pubDate) >= lastNewsItemPubDate) {
+          acc.push(this._createNewsItem(item));
+        }
+        return acc;
+      }, []);
 
-      this._newsItemMap.newsItems(newsItems);
+      const currentTotalNewsItems = this._newsItemMap.addNewsItems(newsItems);
 
-      if (newsItems.length < 50) break;
+      if (currentTotalNewsItems.length >= maxItems || newsItems.length < 50) break;
 
       startIndex += 50;
-      totalFetched += newsItems.length;
     }
   }
 

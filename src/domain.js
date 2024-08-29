@@ -140,8 +140,9 @@ class NewsItemMap {
    * 여러 뉴스 항목을 한 번에 맵에 추가합니다.
    * @param {NewsItem[]} newsItems - 추가할 뉴스 항목 배열
    */
-  set newsItems(newsItems) {
+  addNewsItems(newsItems) {
     newsItems.forEach((newsItem) => this._addNewsItem(newsItem));
+    return this.newsItems;
   }
 
   /**
