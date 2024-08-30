@@ -13,7 +13,15 @@
 
 function runNewsFetchingBot() {
   try {
+    // TODO: GAS Property값을 Service로 넘겨 처리하는 로직 추가
+    // TODO: 뉴스봇 최초 실행 여부를 판별하여 분기 처리하는 로직 추가
+
     const Controller = new NewsFetchingBotController();
+
+    if (CONFIG.DEBUG) {
+      Controller.runDebug();
+      return;
+    }
 
     Controller.sendNewsItems();
     Controller.archiveNewsItems();
@@ -38,10 +46,6 @@ function runNewsFetchingBot() {
 }
 
 class NewsFetchingBotController {
-  // TODO: DEBUG 설정값에 따른 분기 처리
-  // TODO: GAS Property 값들을 불러와 Service에 반영하는 로직 추가
-  // TODO: 최초 사용자로서 GAS Property 값이 존재하지 않는 경우에 대한 분기 처리 추가
-
   constructor() {
     validateConfig(CONFIG);
 
@@ -52,15 +56,17 @@ class NewsFetchingBotController {
       newsSource: NEWS_SOURCE,
     });
 
-    this._messagingService = new MessagingService({
-      webhooks: this._getWebhooksByServices(),
-      newsCardGenerator: NewsCardGenerator,
-      messageGenerator: MessageGenerator,
-    });
+    if (!CONFIG.DEBUG) {
+      this._messagingService = new MessagingService({
+        webhooks: this._getWebhooksByServices(),
+        newsCardGenerator: NewsCardGenerator,
+        messageGenerator: MessageGenerator,
+      });
 
-    this._archivingService = new ArchivingService({
-      config: CONFIG.ARCHIVING_SHEET.SHEET_INFO,
-    });
+      this._archivingService = new ArchivingService({
+        config: CONFIG.ARCHIVING_SHEET.SHEET_INFO,
+      });
+    }
   }
 
   _getWebhooksByServices() {
@@ -70,6 +76,23 @@ class NewsFetchingBotController {
         acc[key] = config.URL;
         return acc;
       }, {});
+  }
+
+  runDebug() {
+    try {
+      Logger.log("[INFO] DEBUG 모드가 켜져 있습니다. 뉴스를 가져와 로깅하는 작업만 수행합니다.");
+
+      const fetchedNewsItems = this._newsFetchService.fetchNewsItems(CONFIG.KEYWORDS);
+      fetchedNewsItems.forEach((newsItem, index) => {
+        const { pubDateText, title, source, link, description, keywords } = newsItem.data;
+
+        Logger.log(`----- ${fetchedNewsItems.length}개 항목 중 ${index + 1}번째 -----`);
+        Logger.log(`${pubDateText}\n${title}\n${source}\n${link}\n${description}`);
+        Logger.log(`검색어: ${keywords.join(", ")}`);
+      });
+    } catch (error) {
+      Logger.log(`[ERROR] DEBUG 모드 구동 중 오류 발생: ${error.message}`);
+    }
   }
 
   sendNewsItems() {
@@ -107,6 +130,11 @@ class NewsFetchingBotController {
   }
 
   printResults() {
+    if (CONFIG.DEBUG) {
+      Logger.log("[RESULT] DEBUG 모드 구동이 완료되었습니다.");
+      return;
+    }
+
     const resultNumber = this._messagingService.deliveredNewsItems.length;
     Logger.log(`[RESULT] 총 ${resultNumber}건의 뉴스 작업이 완료되었습니다.`);
   }
