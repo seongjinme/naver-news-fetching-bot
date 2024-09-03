@@ -95,6 +95,22 @@ function toCamelCase(text) {
 }
 
 /**
+ * string[] 타입의 두 배열이 순서 구분 없이 서로 동일한 크기와 내용을 가졌는지 검증합니다.
+ * @param {string[]} arrayA - A 배열
+ * @param {string[]} arrayB - B 배열
+ * @returns {boolean} 두 배열의 비교 결과값
+ */
+function isTwoArraysEqual(arrayA, arrayB) {
+  if (arrayA === arrayB) return true;
+  if (arrayA === null || arrayB === null || arrayA.length !== arrayB.length) return false;
+
+  const sortedArrayA = [...arrayA].sort();
+  const sortedArrayB = [...arrayB].sort();
+
+  return sortedArrayA.every((item, index) => item === sortedArrayB[index]);
+}
+
+/**
  * 뉴스봇 구동 설정값을 검증합니다.
  * @param {Object} config - 뉴스봇 구동 설정값 객체
  * @throws {ConfigValidationError} 설정값 검증 실패시 에러 반환
