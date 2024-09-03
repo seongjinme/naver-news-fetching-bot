@@ -52,13 +52,13 @@ class NewsItem {
   /**
    * 뉴스 기사의 발행일이 지정된 시간 이후인지 확인합니다.
    * @param {Object} options - 비교 옵션
-   * @param {Date} options.latestNewsItemPubDate - 마지막 업데이트 시각
-   * @param {number} [options.subsetTime] - 부분 집합 시간 (선택적)
+   * @param {Date} options.lastDeliveredNewsPubDate - 마지막으로 전송된 뉴스 항목의 발행 시각
+   * @param {number} [options.subsetTime] - 발행일 기준 시각에서 추가로 뺄 밀리초 단위 시간 (선택)
    * @returns {boolean} 뉴스 기사의 발행일이 지정된 시간 이후인 경우 true, 그렇지 않은 경우 false
    */
-  isAfterLatestNewsItem({ latestNewsItemPubDate, subsetTime }) {
+  isAfterLatestNewsItem({ lastDeliveredNewsPubDate, subsetTime }) {
     const subsetTimeAmount = subsetTime && !Number.isNaN(subsetTime) ? subsetTime : 0;
-    return this._pubDate.getTime() >= latestNewsItemPubDate.getTime() - subsetTimeAmount;
+    return this._pubDate.getTime() >= lastDeliveredNewsPubDate.getTime() - subsetTimeAmount;
   }
 
   /**
@@ -122,13 +122,13 @@ class NewsItem {
 class NewsItemMap {
   /**
    * NewsItemMap 클래스의 생성자입니다.
-   * @param {string[]} lastFetchedNewsItems - 이전에 가져온 뉴스 항목들의 해시 ID 배열
-   * @param {Date} lastNewsItemPubDate - 마지막으로 처리되었던 뉴스 항목의 게재 시각
+   * @param {string[]} lastDeliveredNewsHashIds - 마지막으로 전송 완료된 뉴스 항목들의 해시 ID 배열
+   * @param {Date} lastDeliveredNewsPubDate - 마지막으로 전송 완료된 뉴스 항목의 게재 시각
    */
-  constructor({ lastFetchedNewsItems, lastNewsItemPubDate }) {
+  constructor({ lastDeliveredNewsHashIds, lastDeliveredNewsPubDate }) {
     this._newsItemsMap = new Map();
-    this._lastFetchedNewsItems = lastFetchedNewsItems;
-    this._lastNewsItemPubDate = lastNewsItemPubDate;
+    this._lastDeliveredNewsHashIds = [...lastDeliveredNewsHashIds];
+    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate;
   }
 
   /**
@@ -137,8 +137,8 @@ class NewsItemMap {
    */
   _addNewsItem(newsItem) {
     if (
-      this._lastFetchedNewsItems.includes(newsItem.hashId) ||
-      !newsItem.isAfterLatestNewsItem({ latestNewsItemPubDate: this._lastNewsItemPubDate })
+      this._lastDeliveredNewsHashIds.includes(newsItem.hashId) ||
+      !newsItem.isAfterLatestNewsItem({ lastDeliveredNewsPubDate: this._lastDeliveredNewsPubDate })
     )
       return;
 

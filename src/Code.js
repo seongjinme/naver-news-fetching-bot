@@ -11,20 +11,40 @@
  * - 문의사항 : mail@seongjin.me
  * ***********************************************************************************************/
 
+function getProperties() {
+  const savedSearchKeywords = PropertyManager.getProperty("searchKeywords");
+  const savedLastDeliveredNewsHashIds = PropertyManager.getProperty("lastDeliveredNewsHashIds");
+  const savedLastDeliveredNewsPubDate = PropertyManager.getProperty("lastDeliveredNewsPubDate");
+
+  return {
+    searchKeywords: savedSearchKeywords ? JSON.parse(savedSearchKeywords) : null,
+    lastDeliveredNewsHashIds: savedLastDeliveredNewsHashIds
+      ? JSON.parse(savedLastDeliveredNewsHashIds)
+      : [],
+    lastDeliveredNewsPubDate: savedLastDeliveredNewsPubDate
+      ? new Date(parseFloat(savedLastDeliveredNewsPubDate))
+      : null,
+  };
+}
+
 function runNewsFetchingBot() {
   try {
-    // TODO: GAS Property값을 Service로 넘겨 처리하는 로직 추가
     // TODO: 뉴스봇 최초 실행 여부를 판별하여 분기 처리하는 로직 추가
+    // TODO: 키워드에 대한 검색 결과가 아예 없을 때 데이터 처리 로직 추가
+    const controller = new NewsFetchingBotController(getProperties());
 
-    const Controller = new NewsFetchingBotController();
+    if (controller.isKeywordsChanged()) {
+      controller.handleKeywordsChange();
+    }
 
     if (CONFIG.DEBUG) {
-      Controller.runDebug();
+      controller.runDebug();
       return;
     }
 
-    Controller.sendNewsItems();
-    Controller.archiveNewsItems();
+    controller.sendNewsItems();
+    controller.archiveNewsItems();
+    controller.updateProperties();
   } catch (error) {
     Logger.log(`* 에러로 인해 뉴스봇 구동을 중지합니다. 아래 메시지를 참고해 주세요.`);
 
@@ -39,14 +59,17 @@ function runNewsFetchingBot() {
     }
 
     Logger.log(`[ERROR] 예상치 못한 오류 발생: ${error.message}`);
-    return;
   } finally {
-    Controller.printResults();
+    controller.printResults();
   }
 }
 
 class NewsFetchingBotController {
-  constructor() {
+  constructor({ searchKeywords, lastDeliveredNewsHashIds, lastDeliveredNewsPubDate }) {
+    this._searchKeywords = searchKeywords;
+    this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
+    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate;
+
     validateConfig(CONFIG);
 
     this._newsFetchService = new NewsFetchService({
@@ -54,6 +77,10 @@ class NewsFetchingBotController {
       clientId: CONFIG.NAVER_API_CLIENT.ID,
       clientSecret: CONFIG.NAVER_API_CLIENT.SECRET,
       newsSource: NEWS_SOURCE,
+      newsItemMapProps: {
+        lastDeliveredNewsHashIds: [...this._lastDeliveredNewsHashIds],
+        lastDeliveredNewsPubDate: this._lastDeliveredNewsPubDate,
+      },
     });
 
     if (!CONFIG.DEBUG) {
@@ -78,11 +105,24 @@ class NewsFetchingBotController {
       }, {});
   }
 
+  isKeywordsChanged() {
+    return this._searchKeywords && !this._arraysEqual(this._searchKeywords, CONFIG.KEYWORDS);
+  }
+
+  handleKeywordsChange() {
+    this._searchKeywords = [...CONFIG.KEYWORDS];
+    PropertyManager.setProperty("searchKeywords", JSON.stringify(this._searchKeywords));
+
+    const message = `검색어 변경이 완료되었습니다. 이제부터 '${this._searchKeywords.join(", ")}' 키워드를 포함한 뉴스를 전송합니다.`;
+    Logger.log(`[INFO] ${message}`);
+    this._messagingService.sendMessage(`[네이버 뉴스봇] ${message}`);
+  }
+
   runDebug() {
     try {
       Logger.log("[INFO] DEBUG 모드가 켜져 있습니다. 뉴스를 가져와 로깅하는 작업만 수행합니다.");
 
-      const fetchedNewsItems = this._newsFetchService.fetchNewsItems(CONFIG.KEYWORDS);
+      const fetchedNewsItems = this._newsFetchService.fetchNewsItems(this._searchKeywords);
       fetchedNewsItems.forEach((newsItem, index) => {
         const { pubDateText, title, source, link, description, keywords } = newsItem.data;
 
@@ -104,7 +144,7 @@ class NewsFetchingBotController {
     }
 
     try {
-      const fetchedNewsItems = this._newsFetchService.fetchNewsItems(CONFIG.KEYWORDS);
+      const fetchedNewsItems = this._newsFetchService.fetchNewsItems(this._searchKeywords);
       this._messagingService.sendNewsItems(fetchedNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 전송이 완료되었습니다.");
     } catch (error) {

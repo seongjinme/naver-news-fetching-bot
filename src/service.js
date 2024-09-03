@@ -9,9 +9,9 @@ class NewsFetchService {
    * @param {string} params.clientId - 네이버 API 클라이언트 ID
    * @param {string} params.clientSecret - 네이버 API 클라이언트 시크릿
    * @param {Object} params.newsSource - 뉴스 소스 목록
-   * @param {string[]} params.lastFetchedNewsItems - 가장 최근에 처리된 뉴스 항목들의 해시 ID 배열
+   * @param {Object} params.newsItemMapProps - 뉴스 항목들의 정제에 필요한 Props 모음
    */
-  constructor({ apiUrl, clientId, clientSecret, newsSource, lastFetchedNewsItems }) {
+  constructor({ apiUrl, clientId, clientSecret, newsSource, newsItemMapProps }) {
     this._apiUrl = apiUrl;
     this._fetchOptions = {
       method: "get",
@@ -21,7 +21,7 @@ class NewsFetchService {
       },
     };
     this._newsSourceFinder = new NewsSourceFinder(newsSource);
-    this._newsItemMap = new NewsItemMap(lastFetchedNewsItems);
+    this._newsItemMap = new NewsItemMap(newsItemMapProps);
   }
 
   /**
