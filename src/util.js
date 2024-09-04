@@ -206,4 +206,13 @@ function validateConfig(config) {
       );
     }
   });
+
+  if (
+    Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
+    !config.ARCHIVING.IS_ENABLED
+  ) {
+    throw new ConfigValidationError(
+      "뉴스 항목을 전송할 웹훅 사용 여부(CONFIG.WEBHOOK.*.IS_ENABLED)와 뉴스 항목 저장 여부(CONFIG.ARCHIVING.IS_ENABLED) 가운데 최소 1가지 이상은 true여야 합니다.",
+    );
+  }
 }
