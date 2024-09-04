@@ -147,11 +147,16 @@ class NewsItemMap {
   }
 
   /**
-   * 맵에 저장된 모든 뉴스 항목을 배열로 반환합니다.
-   * @returns {NewsItem[]} 모든 뉴스 항목 배열
+   * 맵에 저장된 모든 뉴스 항목을 조건에 따라 정렬된 배열로 반환합니다.
+   * @param {Object} params - 정렬 조건
+   * @param {boolean} [params.sortByDesc] - 시간 역순 정렬 여부
+   * @returns {NewsItem[]} 모든 뉴스 항목의 정렬된 배열
    */
-  get newsItems() {
-    return Array.from(this._newsItemsMap.values());
+  getNewsItems({ sortByDesc }) {
+    if (sortByDesc) {
+      return [...this._newsItemsMap.values()].sort((a, b) => b.pubDate - a.pubDate);
+    }
+    return [...this._newsItemsMap.values()].sort((a, b) => a.pubDate - b.pubDate);
   }
 
   /**
@@ -159,7 +164,7 @@ class NewsItemMap {
    * @returns {string[]} 모든 뉴스 항목의 해시 ID 배열
    */
   get newsHashIds() {
-    return Array.from(this._newsItemsMap.keys());
+    return [...this._newsItemsMap.keys()];
   }
 
   /**

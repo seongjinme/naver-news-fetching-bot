@@ -48,15 +48,17 @@ class NewsFetchService {
 
   /**
    * 검색어들이 포함된 최신 뉴스 항목들을 가져옵니다.
-   * @param {string[]} searchKeywords - 검색어 목록
+   * @param {Object} params - 최신 뉴스 검색 옵션
+   * @param {string[]} params.searchKeywords - 검색어 목록
+   * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
    * @returns {NewsItem[]} 새로 가져온 뉴스 항목들
    */
-  fetchNewsItems(searchKeywords) {
+  fetchNewsItems({ searchKeywords, sortByDesc }) {
     searchKeywords.forEach((searchKeyword) => {
       this._fetchNewsItemsForEachKeyword(searchKeyword);
     });
 
-    return this._newsItemMap.newsItems;
+    return this._newsItemMap.getNewsItems({ sortByDesc });
   }
 
   /**
@@ -323,10 +325,12 @@ class MessagingService {
 
   /**
    * 전송 완료된 뉴스 기사들에 대한 정보를 반환합니다.
+   * @param {Object} params - 전송 완료된 뉴스 기사들의 정보 조회 옵션
+   * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
    * @returns {NewsItem[]} 전송 완료된 뉴스 기사들
    */
-  get deliveredNewsItems() {
-    return this._deliveredNewsItems.newsItems;
+  getDeliveredNewsItems({ sortByDesc }) {
+    return this._deliveredNewsItems.getNewsItems({ sortByDesc });
   }
 
   /**
@@ -424,7 +428,7 @@ class ArchivingService {
     try {
       this._workSheet.insertRowsBefore(2, newsItems.length);
       const valueRange = Sheets.newValueRange();
-      valueRange.values = newsItems.reverse().map((newsItem) => newsItem.archivingData);
+      valueRange.values = newsItems.map((newsItem) => newsItem.archivingData);
 
       Sheets.Spreadsheets.Values.update(
         valueRange,

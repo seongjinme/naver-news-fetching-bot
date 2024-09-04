@@ -30,7 +30,6 @@ function getProperties() {
 function runNewsFetchingBot() {
   try {
     // TODO: 뉴스 전송 종료 후 해당 시점과 hashId값들을 Property로 저장하는 로직 추가
-    // TODO: Fetch받은 뉴스 항목들의 최신 역순 정렬 로직 추가
     // TODO: 뉴스봇 최초 실행 여부를 판별하여 분기 처리하는 로직 추가
     // TODO: 키워드에 대한 검색 결과가 아예 없을 때 데이터 처리 로직 추가 (_fetchNewsItemsFromAPI)
     const controller = new NewsFetchingBotController(getProperties());
@@ -122,7 +121,9 @@ class NewsFetchingBotController {
     try {
       Logger.log("[INFO] DEBUG 모드가 켜져 있습니다. 뉴스를 가져와 로깅하는 작업만 수행합니다.");
 
-      const fetchedNewsItems = this._newsFetchService.fetchNewsItems(this._searchKeywords);
+      const fetchedNewsItems = this._newsFetchService.fetchNewsItems({
+        searchKeywords: this._searchKeywords,
+      });
       fetchedNewsItems.forEach((newsItem, index) => {
         const { pubDateText, title, source, link, description, keywords } = newsItem.data;
 
@@ -144,7 +145,9 @@ class NewsFetchingBotController {
     }
 
     try {
-      const fetchedNewsItems = this._newsFetchService.fetchNewsItems(this._searchKeywords);
+      const fetchedNewsItems = this._newsFetchService.fetchNewsItems({
+        searchKeywords: this._searchKeywords,
+      });
       this._messagingService.sendNewsItems(fetchedNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 전송이 완료되었습니다.");
     } catch (error) {
@@ -161,7 +164,7 @@ class NewsFetchingBotController {
     }
 
     try {
-      const deliveredNewsItems = this._messagingService.deliveredNewsItems;
+      const deliveredNewsItems = this._messagingService.getDeliveredNewsItems({ sortByDesc: true });
       this._archivingService.archiveNewsItems(deliveredNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 저장이 완료되었습니다.");
     } catch (error) {
