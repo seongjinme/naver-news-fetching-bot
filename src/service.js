@@ -59,7 +59,7 @@ class NewsFetchService {
       this._fetchNewsItemsForEachKeyword(searchKeyword);
     });
 
-    return this._newsItemMap.getNewsItems({ sortByDesc });
+    return this.getFetchedNewsItems({ sortByDesc });
   }
 
   /**
@@ -144,6 +144,16 @@ class NewsFetchService {
     });
 
     return `${this._apiUrl}?${searchParams.toString()}`;
+  }
+
+  /**
+   * 수신 완료된 뉴스 기사들에 대한 정보를 반환합니다.
+   * @param {Object} params - 수신 완료된 뉴스 기사들의 정보 조회 옵션
+   * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
+   * @returns {NewsItem[]} 수신 완료된 뉴스 기사들
+   */
+  getFetchedNewsItems({ sortByDesc }) {
+    return this._newsItemMap.getNewsItems({ sortByDesc });
   }
 }
 
