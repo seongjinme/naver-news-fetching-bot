@@ -95,7 +95,7 @@ class NewsFetchingBotController {
   }
 
   _getWebhooksByServices() {
-    Object.entries(CONFIG.WEBHOOK)
+    return Object.entries(CONFIG.WEBHOOK)
       .filter(([_, config]) => config.IS_ENABLED && config.URL.trim() !== "")
       .reduce((acc, [key, config]) => {
         acc[key] = config.URL;
@@ -105,6 +105,13 @@ class NewsFetchingBotController {
 
   isKeywordsChanged() {
     return this._searchKeywords && !this._arraysEqual(this._searchKeywords, CONFIG.KEYWORDS);
+  }
+
+  _isArchivingOnlyMode() {
+    return (
+      Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
+      config.ARCHIVING.IS_ENABLED
+    );
   }
 
   handleKeywordsChange() {
@@ -169,14 +176,16 @@ class NewsFetchingBotController {
     }
 
     try {
-      const deliveredNewsItems = this._messagingService.getDeliveredNewsItems({ sortByDesc: true });
+      const newsItems = this._isArchivingOnlyMode()
+        ? this._newsFetchService.getFetchedNewsItems({ sortByDesc: true })
+        : this._messagingService.getDeliveredNewsItems({ sortByDesc: true });
 
-      if (deliveredNewsItems.length === 0) {
+      if (newsItems.length === 0) {
         Logger.log("[INFO] 저장할 새 뉴스 항목이 없습니다.");
         return;
       }
 
-      this._archivingService.archiveNewsItems(deliveredNewsItems);
+      this._archivingService.archiveNewsItems(newsItems);
       Logger.log("[SUCCESS] 뉴스 항목 저장이 완료되었습니다.");
     } catch (error) {
       Logger.log(`[ERROR] 뉴스 항목 저장 중 오류 발생: ${error.message}`);
@@ -189,7 +198,10 @@ class NewsFetchingBotController {
       return;
     }
 
-    const resultNumber = this._messagingService.deliveredNewsItems.length;
+    const resultNumber = this._isArchivingOnlyMode()
+      ? this._newsFetchService.getFetchedNewsItems().length
+      : this._messagingService.getDeliveredNewsItems().length;
+
     Logger.log(`[RESULT] 총 ${resultNumber}건의 뉴스 작업이 완료되었습니다.`);
   }
 }
