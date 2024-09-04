@@ -29,7 +29,6 @@ function getProperties() {
 
 function runNewsFetchingBot() {
   try {
-    // TODO: 뉴스 전송 종료 후 해당 시점과 hashId값들을 Property로 저장하는 로직 추가
     // TODO: 뉴스봇 최초 실행 여부를 판별하여 분기 처리하는 로직 추가
     const controller = new NewsFetchingBotController(getProperties());
 
@@ -163,7 +162,9 @@ class NewsFetchingBotController {
       this._messagingService.sendNewsItems(fetchedNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 전송이 완료되었습니다.");
     } catch (error) {
-      Logger.log(`[ERROR] 뉴스 항목 전송 중 오류 발생: ${error.message}`);
+      Logger.log(
+        `[ERROR] 뉴스 항목 전송 중 오류가 발생했습니다. 현재 작업을 종료하고 다음 단계로 넘어갑니다.\n오류 내용: ${error.message}`,
+      );
     }
   }
 
@@ -188,8 +189,30 @@ class NewsFetchingBotController {
       this._archivingService.archiveNewsItems(newsItems);
       Logger.log("[SUCCESS] 뉴스 항목 저장이 완료되었습니다.");
     } catch (error) {
-      Logger.log(`[ERROR] 뉴스 항목 저장 중 오류 발생: ${error.message}`);
+      Logger.log(
+        `[ERROR] 뉴스 항목 저장 중 오류가 발생했습니다. 현재 작업을 종료하고 다음 단계로 넘어갑니다.\n오류 내용: ${error.message}`,
+      );
     }
+  }
+
+  updateProperties() {
+    const lastDeliveredNewsHashIds = this._isArchivingOnlyMode()
+      ? this._archivingService.archivedNewsHashIds
+      : this._messagingService.deliveredNewsHashIds;
+
+    const lastDeliveredNewsPubDate = this._isArchivingOnlyMode()
+      ? this._archivingService.archivedLatestNewsPubDate
+      : this._messagingService.deliveredLatestNewsPubDate;
+
+    PropertyManager.setProperty(
+      "lastDeliveredNewsHashIds",
+      JSON.stringify(lastDeliveredNewsHashIds),
+    );
+
+    PropertyManager.setProperty(
+      "lastDeliveredNewsPubDate",
+      JSON.stringify(lastDeliveredNewsPubDate),
+    );
   }
 
   printResults() {

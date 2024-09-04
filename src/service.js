@@ -29,7 +29,7 @@ class NewsFetchService {
       },
     };
     this._newsSourceFinder = new NewsSourceFinder(newsSource);
-    this._newsItemMap = new NewsItemMap();
+    this._fetchedNewsItems = new NewsItemMap();
     this._lastDeliveredNewsHashIds = [...lastDeliveredNewsHashIds];
     this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate;
   }
@@ -81,7 +81,7 @@ class NewsFetchService {
       );
     if (newsItems.length === 0) return;
 
-    this._newsItemMap.addNewsItems(newsItems);
+    this._fetchedNewsItems.addNewsItems(newsItems);
   }
 
   /**
@@ -153,7 +153,7 @@ class NewsFetchService {
    * @returns {NewsItem[]} 수신 완료된 뉴스 기사들
    */
   getFetchedNewsItems({ sortByDesc }) {
-    return this._newsItemMap.getNewsItems({ sortByDesc });
+    return this._fetchedNewsItems.getNewsItems({ sortByDesc });
   }
 }
 
@@ -380,6 +380,7 @@ class ArchivingService {
     this._spreadSheet = this._getSpreadSheet(this._config.ID);
     this._workSheet = this._getOrCreateWorkSheet(this._config.NAME);
     this._workSheetTargetCell = `${this._config.NAME}!A2`;
+    this._archivedNewsItems = new NewsItemMap();
   }
 
   /**
@@ -452,8 +453,26 @@ class ArchivingService {
           valueInputOption: "USER_ENTERED",
         },
       );
+
+      this._archivedNewsItems.addNewsItems(newsItems);
     } catch (error) {
       throw new Error(error.message);
     }
+  }
+
+  /**
+   * 저장 완료된 뉴스 기사들의 Hash ID값 배열을 반환합니다.
+   * @returns {string[]} 저장 완료된 뉴스 기사들의 Hash ID 배열
+   */
+  get archivedNewsHashIds() {
+    return this._archivedNewsItems.newsHashIds;
+  }
+
+  /**
+   * 저장 완료된 가장 최신 뉴스의 pubDate를 반환합니다.
+   * @returns {Date|null} 가장 최신 뉴스의 pubDate 혹은 null
+   */
+  get archivedLatestNewsPubDate() {
+    return this._archivedNewsItems.latestNewsPubDate;
   }
 }
