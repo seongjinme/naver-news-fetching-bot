@@ -37,11 +37,12 @@ class NewsFetchService {
   /**
    * 하나의 검색어가 포함된 가장 최신의 뉴스 항목 하나를 가져옵니다.
    * @param {string} searchKeyword - 검색어
-   * @returns {NewsItem} 새로 가져온 뉴스 항목들
+   * @returns {NewsItem|null} 새로 가져온 뉴스 항목들, 없을 경우 null 반환
    */
   fetchSingleNewsItem(searchKeyword) {
     const fetchUrl = this._createFetchUrl({ searchKeyword, display: 1 });
     const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
+    if (fetchedNewsItems.length === 0) return null;
 
     return this._createNewsItem(fetchedNewsItems[0]);
   }
@@ -69,6 +70,8 @@ class NewsFetchService {
   _fetchNewsItemsForEachKeyword(searchKeyword) {
     const fetchUrl = this._createFetchUrl({ searchKeyword });
     const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
+    if (fetchedNewsItems.length === 0) return;
+
     const newsItems = fetchedNewsItems
       .map((item) => this._createNewsItem(item))
       .filter(
@@ -76,6 +79,7 @@ class NewsFetchService {
           !this._lastDeliveredNewsHashIds.includes(newsItem.hashId) &&
           this._isAfterLatestNewsItem(),
       );
+    if (newsItems.length === 0) return;
 
     this._newsItemMap.addNewsItems(newsItems);
   }
@@ -93,7 +97,7 @@ class NewsFetchService {
       throw new Error(fetchedData.getContentText());
     }
 
-    return JSON.parse(fetchedData).items;
+    return JSON.parse(fetchedData).items || [];
   }
 
   /**

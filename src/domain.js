@@ -153,9 +153,14 @@ class NewsItemMap {
    * @returns {NewsItem[]} 모든 뉴스 항목의 정렬된 배열
    */
   getNewsItems({ sortByDesc }) {
+    if (this._newsItemsMap.size === 0) {
+      return [];
+    }
+
     if (sortByDesc) {
       return [...this._newsItemsMap.values()].sort((a, b) => b.pubDate - a.pubDate);
     }
+
     return [...this._newsItemsMap.values()].sort((a, b) => a.pubDate - b.pubDate);
   }
 

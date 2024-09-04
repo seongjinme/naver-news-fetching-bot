@@ -31,7 +31,6 @@ function runNewsFetchingBot() {
   try {
     // TODO: 뉴스 전송 종료 후 해당 시점과 hashId값들을 Property로 저장하는 로직 추가
     // TODO: 뉴스봇 최초 실행 여부를 판별하여 분기 처리하는 로직 추가
-    // TODO: 키워드에 대한 검색 결과가 아예 없을 때 데이터 처리 로직 추가 (_fetchNewsItemsFromAPI)
     const controller = new NewsFetchingBotController(getProperties());
 
     if (controller.isKeywordsChanged()) {
@@ -148,6 +147,12 @@ class NewsFetchingBotController {
       const fetchedNewsItems = this._newsFetchService.fetchNewsItems({
         searchKeywords: this._searchKeywords,
       });
+
+      if (fetchedNewsItems.length === 0) {
+        Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
+        return;
+      }
+
       this._messagingService.sendNewsItems(fetchedNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 전송이 완료되었습니다.");
     } catch (error) {
@@ -165,6 +170,12 @@ class NewsFetchingBotController {
 
     try {
       const deliveredNewsItems = this._messagingService.getDeliveredNewsItems({ sortByDesc: true });
+
+      if (deliveredNewsItems.length === 0) {
+        Logger.log("[INFO] 저장할 새 뉴스 항목이 없습니다.");
+        return;
+      }
+
       this._archivingService.archiveNewsItems(deliveredNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 저장이 완료되었습니다.");
     } catch (error) {
