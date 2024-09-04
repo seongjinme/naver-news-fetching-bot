@@ -403,7 +403,7 @@ class ArchivingService {
       const newWorkSheet = this._spreadSheet.insertSheet(workSheetName, 1);
 
       const headerRange = Sheets.newValueRange();
-      headerRange.values = [["날짜/시각", "제목", "매체명", "URL", "내용"]];
+      headerRange.values = [["날짜/시각", "제목", "매체명", "URL", "내용", "검색어"]];
       const headerTargetCell = `${workSheetName}!A1`;
 
       Sheets.Spreadsheets.Values.update(headerRange, this._spreadSheet.getId(), headerTargetCell, {
@@ -421,26 +421,10 @@ class ArchivingService {
    * @param {NewsItem[]} newsItems - 저장할 뉴스 아이템들 데이터
    */
   archiveNewsItems(newsItems) {
-    newsItems.forEach((newsItem) => {
-      this._archiveNewsItem(newsItem.data);
-    });
-  }
-
-  /**
-   * 뉴스 아이템을 구글 시트에 저장합니다.
-   * @param {Object} newsItem - 저장할 뉴스 아이템 데이터
-   * @param {string} newsItem.title - 뉴스 제목
-   * @param {string} newsItem.link - 뉴스 링크
-   * @param {string} newsItem.source - 뉴스 출처
-   * @param {string} newsItem.description - 뉴스 설명
-   * @param {string} newsItem.pubDateText - 발행일 텍스트
-   * @param {string[]} newsItem.keywords - 키워드 배열
-   */
-  _archiveNewsItem({ pubDateText, title, source, link, description, keywords }) {
     try {
-      this._workSheet.insertRowBefore(2);
+      this._workSheet.insertRowsBefore(2, newsItems.length);
       const valueRange = Sheets.newValueRange();
-      valueRange.values = [[pubDateText, title, source, link, description, keywords.join(", ")]];
+      valueRange.values = newsItems.reverse().map((newsItem) => newsItem.archivingData);
 
       Sheets.Spreadsheets.Values.update(
         valueRange,

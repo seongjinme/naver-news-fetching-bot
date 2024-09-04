@@ -102,6 +102,15 @@ class NewsItem {
       keywords: [...this._keywords],
     };
   }
+
+  /**
+   * 뉴스 기사의 데이터를 아카이빙용 포맷으로 반환합니다.
+   * @returns {string[]}
+   */
+  get archivingData() {
+    const { pubDateText, title, source, link, description, keywords } = this.data;
+    return [pubDateText, title, source, link, description, keywords.join(", ")];
+  }
 }
 
 /**
