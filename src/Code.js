@@ -29,8 +29,10 @@ function getProperties() {
 
 function runNewsFetchingBot() {
   try {
+    // TODO: 뉴스 전송 종료 후 해당 시점과 hashId값들을 Property로 저장하는 로직 추가
+    // TODO: Fetch받은 뉴스 항목들의 최신 역순 정렬 로직 추가
     // TODO: 뉴스봇 최초 실행 여부를 판별하여 분기 처리하는 로직 추가
-    // TODO: 키워드에 대한 검색 결과가 아예 없을 때 데이터 처리 로직 추가
+    // TODO: 키워드에 대한 검색 결과가 아예 없을 때 데이터 처리 로직 추가 (_fetchNewsItemsFromAPI)
     const controller = new NewsFetchingBotController(getProperties());
 
     if (controller.isKeywordsChanged()) {
@@ -77,10 +79,8 @@ class NewsFetchingBotController {
       clientId: CONFIG.NAVER_API_CLIENT.ID,
       clientSecret: CONFIG.NAVER_API_CLIENT.SECRET,
       newsSource: NEWS_SOURCE,
-      newsItemMapProps: {
-        lastDeliveredNewsHashIds: [...this._lastDeliveredNewsHashIds],
-        lastDeliveredNewsPubDate: this._lastDeliveredNewsPubDate,
-      },
+      lastDeliveredNewsHashIds: this._lastDeliveredNewsHashIds,
+      lastDeliveredNewsPubDate: this._lastDeliveredNewsPubDate,
     });
 
     if (!CONFIG.DEBUG) {

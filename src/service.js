@@ -9,9 +9,17 @@ class NewsFetchService {
    * @param {string} params.clientId - 네이버 API 클라이언트 ID
    * @param {string} params.clientSecret - 네이버 API 클라이언트 시크릿
    * @param {Object} params.newsSource - 뉴스 소스 목록
-   * @param {Object} params.newsItemMapProps - 뉴스 항목들의 정제에 필요한 Props 모음
+   * @param {string[]} lastDeliveredNewsHashIds - 마지막으로 전송 완료된 뉴스 항목들의 해시 ID 배열
+   * @param {Date} lastDeliveredNewsPubDate - 마지막으로 전송 완료된 뉴스 항목의 게재 시각
    */
-  constructor({ apiUrl, clientId, clientSecret, newsSource, newsItemMapProps }) {
+  constructor({
+    apiUrl,
+    clientId,
+    clientSecret,
+    newsSource,
+    lastDeliveredNewsHashIds,
+    lastDeliveredNewsPubDate,
+  }) {
     this._apiUrl = apiUrl;
     this._fetchOptions = {
       method: "get",
@@ -21,7 +29,9 @@ class NewsFetchService {
       },
     };
     this._newsSourceFinder = new NewsSourceFinder(newsSource);
-    this._newsItemMap = new NewsItemMap(newsItemMapProps);
+    this._newsItemMap = new NewsItemMap();
+    this._lastDeliveredNewsHashIds = [...lastDeliveredNewsHashIds];
+    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate;
   }
 
   /**
@@ -57,7 +67,13 @@ class NewsFetchService {
   _fetchNewsItemsForEachKeyword(searchKeyword) {
     const fetchUrl = this._createFetchUrl({ searchKeyword });
     const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
-    const newsItems = fetchedNewsItems.map((item) => this._createNewsItem(item));
+    const newsItems = fetchedNewsItems
+      .map((item) => this._createNewsItem(item))
+      .filter(
+        (newsItem) =>
+          !this._lastDeliveredNewsHashIds.includes(newsItem.hashId) &&
+          this._isAfterLatestNewsItem(),
+      );
 
     this._newsItemMap.addNewsItems(newsItems);
   }
@@ -65,7 +81,7 @@ class NewsFetchService {
   /**
    * API에서 데이터를 가져오고 파싱합니다.
    * @param {string} fetchUrl - API 요청 URL
-   * @returns {Object} 파싱된 JSON 응답 데이터
+   * @returns {Object[]} 파싱된 JSON 응답 데이터
    * @throws {Error} API 요청이 실패하거나 응답 코드가 200이 아닐 경우
    * @private
    */
@@ -76,6 +92,16 @@ class NewsFetchService {
     }
 
     return JSON.parse(fetchedData).items;
+  }
+
+  /**
+   * 뉴스 기사의 발행일이 지정된 시간 이후인지 확인합니다.
+   * @param {number} [subsetTime] - 발행일 기준 시각에서 추가로 뺄 밀리초 단위 시간 (선택)
+   * @returns {boolean} 뉴스 기사의 발행일이 지정된 시간 이후인 경우 true, 그렇지 않은 경우 false
+   */
+  _isAfterLatestNewsItem(subsetTime) {
+    const subsetTimeAmount = subsetTime && !Number.isNaN(subsetTime) ? subsetTime : 0;
+    return this._pubDate.getTime() >= this._lastDeliveredNewsPubDate.getTime() - subsetTimeAmount;
   }
 
   /**
@@ -232,7 +258,7 @@ class MessagingService {
       method: "post",
       contentType: "application/json",
     };
-    this._deliveredNewsItems = [];
+    this._deliveredNewsItems = new NewsItemMap();
   }
 
   /**
@@ -242,7 +268,7 @@ class MessagingService {
   sendNewsItems(newsItems) {
     newsItems.forEach((newsItem) => {
       this._sendNewsItemToChannels(newsItem);
-      this._deliveredNewsItems.push(newsItem);
+      this._deliveredNewsItems.addNewsItem(newsItem);
     });
   }
 
@@ -300,7 +326,23 @@ class MessagingService {
    * @returns {NewsItem[]} 전송 완료된 뉴스 기사들
    */
   get deliveredNewsItems() {
-    return [...this._deliveredNewsItems];
+    return this._deliveredNewsItems.newsItems;
+  }
+
+  /**
+   * 전송 완료된 뉴스 기사들의 Hash ID값 배열을 반환합니다.
+   * @returns {string[]} 전송 완료된 뉴스 기사들의 Hash ID 배열
+   */
+  get deliveredNewsHashIds() {
+    return this._deliveredNewsItems.newsHashIds;
+  }
+
+  /**
+   * 전송 완료된 가장 최신 뉴스의 pubDate를 반환합니다.
+   * @returns {Date|null} 가장 최신 뉴스의 pubDate 혹은 null
+   */
+  get deliveredLatestNewsPubDate() {
+    return this._deliveredNewsItems.latestNewsPubDate;
   }
 }
 

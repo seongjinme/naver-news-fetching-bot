@@ -50,18 +50,6 @@ class NewsItem {
   }
 
   /**
-   * 뉴스 기사의 발행일이 지정된 시간 이후인지 확인합니다.
-   * @param {Object} options - 비교 옵션
-   * @param {Date} options.lastDeliveredNewsPubDate - 마지막으로 전송된 뉴스 항목의 발행 시각
-   * @param {number} [options.subsetTime] - 발행일 기준 시각에서 추가로 뺄 밀리초 단위 시간 (선택)
-   * @returns {boolean} 뉴스 기사의 발행일이 지정된 시간 이후인 경우 true, 그렇지 않은 경우 false
-   */
-  isAfterLatestNewsItem({ lastDeliveredNewsPubDate, subsetTime }) {
-    const subsetTimeAmount = subsetTime && !Number.isNaN(subsetTime) ? subsetTime : 0;
-    return this._pubDate.getTime() >= lastDeliveredNewsPubDate.getTime() - subsetTimeAmount;
-  }
-
-  /**
    * 뉴스 기사에 대한 검색 키워드를 추가합니다.
    * @param {string[]} keywords - 추가할 검색 키워드 항목
    */
@@ -122,26 +110,16 @@ class NewsItem {
 class NewsItemMap {
   /**
    * NewsItemMap 클래스의 생성자입니다.
-   * @param {string[]} lastDeliveredNewsHashIds - 마지막으로 전송 완료된 뉴스 항목들의 해시 ID 배열
-   * @param {Date} lastDeliveredNewsPubDate - 마지막으로 전송 완료된 뉴스 항목의 게재 시각
    */
-  constructor({ lastDeliveredNewsHashIds, lastDeliveredNewsPubDate }) {
+  constructor() {
     this._newsItemsMap = new Map();
-    this._lastDeliveredNewsHashIds = [...lastDeliveredNewsHashIds];
-    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate;
   }
 
   /**
    * 뉴스 항목을 맵에 추가합니다. 이미 존재하는 항목의 경우 검색 키워드만 업데이트합니다.
    * @param {NewsItem} newsItem - 추가할 뉴스 항목
    */
-  _addNewsItem(newsItem) {
-    if (
-      this._lastDeliveredNewsHashIds.includes(newsItem.hashId) ||
-      !newsItem.isAfterLatestNewsItem({ lastDeliveredNewsPubDate: this._lastDeliveredNewsPubDate })
-    )
-      return;
-
+  addNewsItem(newsItem) {
     const existingItem = this._newsItemsMap.get(newsItem.hashId);
     if (existingItem) {
       existingItem.addSearchKeyword(newsItem.keywords);
@@ -156,7 +134,7 @@ class NewsItemMap {
    * @param {NewsItem[]} newsItems - 추가할 뉴스 항목 배열
    */
   addNewsItems(newsItems) {
-    newsItems.forEach((newsItem) => this._addNewsItem(newsItem));
+    newsItems.forEach((newsItem) => this.addNewsItem(newsItem));
   }
 
   /**
