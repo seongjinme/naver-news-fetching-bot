@@ -35,28 +35,16 @@ class NewsFetchService {
   }
 
   /**
-   * 하나의 검색어가 포함된 가장 최신의 뉴스 항목 하나를 가져옵니다.
-   * @param {string} searchKeyword - 검색어
-   * @returns {NewsItem|null} 새로 가져온 뉴스 항목들, 없을 경우 null 반환
-   */
-  fetchSingleNewsItem(searchKeyword) {
-    const fetchUrl = this._createFetchUrl({ searchKeyword, display: 1 });
-    const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
-    if (fetchedNewsItems.length === 0) return null;
-
-    return this._createNewsItem(fetchedNewsItems[0]);
-  }
-
-  /**
    * 검색어들이 포함된 최신 뉴스 항목들을 가져옵니다.
    * @param {Object} params - 최신 뉴스 검색 옵션
    * @param {string[]} params.searchKeywords - 검색어 목록
+   * @param {number} [params.display] - 각 검색어별 뉴스 검색 수
    * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
    * @returns {NewsItem[]} 새로 가져온 뉴스 항목들
    */
-  fetchNewsItems({ searchKeywords, sortByDesc }) {
+  fetchNewsItems({ searchKeywords, display, sortByDesc }) {
     searchKeywords.forEach((searchKeyword) => {
-      this._fetchNewsItemsForEachKeyword(searchKeyword);
+      this._fetchNewsItemsForEachKeyword({ searchKeyword, display });
     });
 
     return this.getFetchedNewsItems({ sortByDesc });
@@ -64,11 +52,13 @@ class NewsFetchService {
 
   /**
    * 단일 검색어에 대한 뉴스 항목들을 가져옵니다.
-   * @param {string} searchKeyword - 검색어
+   * @param {Object} params - 단일 검색어 뉴스 검색 옵션
+   * @param {string} params.searchKeyword - 검색어
+   * @param {number} [params.display] - 검색어에 대한 뉴스 검색 수
    * @private
    */
-  _fetchNewsItemsForEachKeyword(searchKeyword) {
-    const fetchUrl = this._createFetchUrl({ searchKeyword });
+  _fetchNewsItemsForEachKeyword({ searchKeyword, display }) {
+    const fetchUrl = this._createFetchUrl({ searchKeyword, display });
     const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
     if (fetchedNewsItems.length === 0) return;
 
