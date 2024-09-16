@@ -126,14 +126,14 @@ class NewsFetchService {
    * @private
    */
   _createFetchUrl({ searchKeyword, startIndex = 1, display = 100 }) {
-    const searchParams = new URLSearchParams({
-      query: encodeURIComponent(searchKeyword),
+    const searchParams = objectToQueryParams({
+      query: searchKeyword,
       start: startIndex,
       display,
       sort: "date",
     });
 
-    return `${this._apiUrl}?${searchParams.toString()}`;
+    return `${this._apiUrl}?${searchParams}`;
   }
 
   /**

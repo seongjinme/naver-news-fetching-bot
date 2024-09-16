@@ -141,6 +141,17 @@ function isTwoArraysEqual(arrayA, arrayB) {
 }
 
 /**
+ * key-value 타입으로 작성된 객체를 query string 포맷으로 변환합니다.
+ * @param {Record<string, T>} params - Query에 담을 내용
+ * @returns {string} Query string 값
+ */
+function objectToQueryParams(params) {
+  return Object.entries(params)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join("&");
+}
+
+/**
  * 뉴스봇 구동 설정값을 검증합니다.
  * @param {Object} config - 뉴스봇 구동 설정값 객체
  * @throws {ConfigValidationError} 설정값 검증 실패시 에러 반환
