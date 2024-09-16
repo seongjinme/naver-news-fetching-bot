@@ -29,6 +29,36 @@ class PropertyError extends Error {
 }
 
 /**
+ * 뉴스 수신 중 발생한 오류에 대한 사용자 정의 에러 클래스입니다.
+ * @extends Error
+ */
+class NewsFetchError extends Error {
+  /**
+   * NewsFetchError 생성자
+   * @param {string} message - 오류 메시지
+   */
+  constructor(message) {
+    super(message);
+    this.name = "NewsFetchError";
+  }
+}
+
+/**
+ * 뉴스봇 초기화 구동 중 발생한 오류에 대한 사용자 정의 에러 클래스입니다.
+ * @extends Error
+ */
+class InitializationError extends Error {
+  /**
+   * InitializationError 생성자
+   * @param {string} message - 오류 메시지
+   */
+  constructor(message) {
+    super(message);
+    this.name = "InitializationError";
+  }
+}
+
+/**
  * GAS의 PropertiesService를 사용하여 속성값을 관리하는 유틸리티 객체입니다.
  * @typedef {Object} PropertyManager
  * @property {function(string): string|null} getProperty - 지정된 하나의 속성값을 가져오는 함수

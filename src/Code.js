@@ -30,6 +30,7 @@ function runNewsFetchingBot() {
       return;
     }
 
+    controller.fetchNewsItems();
     controller.sendNewsItems();
     controller.archiveNewsItems();
     controller.updateProperties();
@@ -43,6 +44,11 @@ function runNewsFetchingBot() {
 
     if (error instanceof ConfigValidationError) {
       Logger.log(`[ERROR] 뉴스봇 설정값 오류 발생: ${error.message}`);
+      return;
+    }
+
+    if (error instanceof NewsFetchError) {
+      Logger.log(`[ERROR] 뉴스 수신 중 오류 발생: ${error.message}`);
       return;
     }
 
@@ -130,13 +136,24 @@ class NewsFetchingBotController {
     try {
       Logger.log("[INFO] 뉴스봇 초기 설정을 시작합니다.");
 
-      const newsItems = this._fetchAndSendSampleNews();
-      this._saveInitialProperties({ isSampleNewsFetched: newsItems && newsItems.length > 0 });
-      this._sendWelcomeMessage();
+      const sampleNewsItems = this._newsFetchService.fetchNewsItems({
+        searchKeywords: this._searchKeywords,
+        display: 1,
+      });
 
-      PropertyManager.setProperty("initializationCompleted", "true");
+      const isSampleNewsFetched = sampleNewsItems && sampleNewsItems.length > 0;
+
+      if (fetchedNewsItems.length > 0) {
+        Logger.log("[INFO] 등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.");
+        this.sendNewsItems();
+      } else {
+        Logger.log("[INFO] 모든 키워드에 대해 검색된 뉴스가 없습니다. 다음 단계로 넘어갑니다.");
+      }
+
+      this._saveInitialProperties({ isSampleNewsFetched });
+      this._sendWelcomeMessage();
     } catch (error) {
-      this._handleInitializationError(error);
+      throw new InitializationError(error.message);
     }
   }
 
@@ -147,6 +164,7 @@ class NewsFetchingBotController {
       const fetchedNewsItems = this._newsFetchService.fetchNewsItems({
         searchKeywords: this._searchKeywords,
       });
+
       fetchedNewsItems.forEach((newsItem, index) => {
         const { pubDateText, title, source, link, description, keywords } = newsItem.data;
 
@@ -156,6 +174,18 @@ class NewsFetchingBotController {
       });
     } catch (error) {
       Logger.log(`[ERROR] DEBUG 모드 구동 중 오류 발생: ${error.message}`);
+    } finally {
+      Logger.log("[INFO] DEBUG 모드 구동이 완료되었습니다.");
+    }
+  }
+
+  fetchNewsItems() {
+    try {
+      return this._newsFetchService.fetchNewsItems({
+        searchKeywords: this._searchKeywords,
+      });
+    } catch (error) {
+      throw new NewsFetchError(error.message);
     }
   }
 
@@ -168,9 +198,7 @@ class NewsFetchingBotController {
     }
 
     try {
-      const fetchedNewsItems = this._newsFetchService.fetchNewsItems({
-        searchKeywords: this._searchKeywords,
-      });
+      const fetchedNewsItems = this._newsFetchService.getFetchedNewsItems();
 
       if (fetchedNewsItems.length === 0) {
         Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
@@ -252,27 +280,8 @@ class NewsFetchingBotController {
     return Object.keys(this._getWebhooksByServices()).length > 0;
   }
 
-  _fetchAndSendSampleNews() {
-    try {
-      const newsItems = this._newsFetchService.fetchNewsItems({
-        searchKeywords: this._searchKeywords,
-        display: 1,
-      });
-
-      if (newsItems.length > 0) {
-        Logger.log("[INFO] 등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.");
-        this._messagingService.sendNewsItems(newsItems);
-      } else {
-        Logger.log("[INFO] 모든 키워드에 대해 검색된 뉴스가 없습니다. 다음 단계로 넘어갑니다.");
-      }
-
-      return newsItems;
-    } catch (error) {
-      Logger.log(
-        `[ERROR] 뉴스 항목 전송 중 오류가 발생했습니다. 현재 작업을 종료하고 다음 단계로 넘어갑니다.\n오류 내용: ${error.message}`,
-      );
-      return [];
-    }
+  _isSearchKeywordsConfigured() {
+    return !this._searchKeywords || this._searchKeywords.length > 0;
   }
 
   _saveInitialProperties({ isSampleNewsFetched }) {
@@ -285,6 +294,7 @@ class NewsFetchingBotController {
       searchKeywords: this._searchKeywords,
       lastDeliveredNewsHashIds,
       lastDeliveredNewsPubDate,
+      initializationCompleted: true,
     });
   }
 
@@ -293,14 +303,5 @@ class NewsFetchingBotController {
 
     Logger.log(`[INFO] ${welcomeMessage}`);
     this._messagingService.sendMessage(`[네이버 뉴스봇] ${welcomeMessage}`);
-  }
-
-  _handleInitializationError(error) {
-    const errorMessage = "뉴스봇 초기 설정 중 오류가 발생했습니다";
-
-    Logger.log(`[ERROR] ${errorMessage}: ${error.message}`);
-    this._messagingService.sendMessage(`[네이버 뉴스봇] ${errorMessage}. 관리자에게 문의해주세요.`);
-
-    throw error;
   }
 }
