@@ -108,10 +108,10 @@ class NewsFetchService {
    */
   _createNewsItem(newsItem) {
     return new NewsItem({
-      title: bleachText(newsItem.title),
+      title: getBleachedText(newsItem.title),
       link: newsItem.link,
       source: this._newsSourceFinder.getSourceByLink(newsItem.originallink),
-      description: bleachText(newsItem.description),
+      description: getBleachedText(newsItem.description),
       pubDate: new Date(newsItem.pubDate),
     });
   }
