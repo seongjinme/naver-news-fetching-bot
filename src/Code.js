@@ -11,26 +11,15 @@
  * - 문의사항 : mail@seongjin.me
  * ***********************************************************************************************/
 
-function getProperties() {
-  const savedSearchKeywords = PropertyManager.getProperty("searchKeywords");
-  const savedLastDeliveredNewsHashIds = PropertyManager.getProperty("lastDeliveredNewsHashIds");
-  const savedLastDeliveredNewsPubDate = PropertyManager.getProperty("lastDeliveredNewsPubDate");
-
-  return {
-    searchKeywords: savedSearchKeywords ? JSON.parse(savedSearchKeywords) : null,
-    lastDeliveredNewsHashIds: savedLastDeliveredNewsHashIds
-      ? JSON.parse(savedLastDeliveredNewsHashIds)
-      : [],
-    lastDeliveredNewsPubDate: savedLastDeliveredNewsPubDate
-      ? new Date(parseFloat(savedLastDeliveredNewsPubDate))
-      : null,
-  };
-}
-
 function runNewsFetchingBot() {
   try {
-    // TODO: 뉴스봇 최초 실행 여부를 판별하여 분기 처리하는 로직 추가
-    const controller = new NewsFetchingBotController(getProperties());
+    const controllerProperties = getControllerProperties();
+    const controller = new NewsFetchingBotController(controllerProperties);
+
+    if (controllerProperties.isFirstRun) {
+      controller.initiateFirstRun();
+      return;
+    }
 
     if (controller.isKeywordsChanged()) {
       controller.handleKeywordsChange();
@@ -45,7 +34,7 @@ function runNewsFetchingBot() {
     controller.archiveNewsItems();
     controller.updateProperties();
   } catch (error) {
-    Logger.log(`* 에러로 인해 뉴스봇 구동을 중지합니다. 아래 메시지를 참고해 주세요.`);
+    Logger.log(`[ERROR] 에러로 인해 뉴스봇 구동을 중지합니다. 아래 메시지를 참고해 주세요.`);
 
     if (error instanceof PropertyError) {
       Logger.log(`[ERROR] Google Apps Script 환경 오류 발생: ${error.message}`);
@@ -63,13 +52,31 @@ function runNewsFetchingBot() {
   }
 }
 
+function getControllerProperties() {
+  const savedSearchKeywords = PropertyManager.getProperty("searchKeywords");
+  const savedLastDeliveredNewsHashIds = PropertyManager.getProperty("lastDeliveredNewsHashIds");
+  const savedLastDeliveredNewsPubDate = PropertyManager.getProperty("lastDeliveredNewsPubDate");
+  const savedInitializationCompleted = PropertyManager.getProperty("initializationCompleted");
+
+  return {
+    searchKeywords: savedSearchKeywords ? JSON.parse(savedSearchKeywords) : null,
+    lastDeliveredNewsHashIds: savedLastDeliveredNewsHashIds
+      ? JSON.parse(savedLastDeliveredNewsHashIds)
+      : [],
+    lastDeliveredNewsPubDate: savedLastDeliveredNewsPubDate
+      ? new Date(parseFloat(savedLastDeliveredNewsPubDate))
+      : null,
+    isFirstRun: !(savedInitializationCompleted && savedInitializationCompleted === "true"),
+  };
+}
+
 class NewsFetchingBotController {
   constructor({ searchKeywords, lastDeliveredNewsHashIds, lastDeliveredNewsPubDate }) {
-    this._searchKeywords = searchKeywords;
-    this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
-    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate;
-
     validateConfig(CONFIG);
+
+    this._searchKeywords = searchKeywords || [...CONFIG.KEYWORDS];
+    this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
+    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate || new Date().getTime() - 60 * 1000;
 
     this._newsFetchService = new NewsFetchService({
       apiUrl: "https://openapi.naver.com/v1/search/news.json",
@@ -91,26 +98,23 @@ class NewsFetchingBotController {
         config: CONFIG.ARCHIVING_SHEET.SHEET_INFO,
       });
     }
+
+    this._isArchivingOnlyMode =
+      Object.values(CONFIG.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
+      CONFIG.ARCHIVING.IS_ENABLED;
   }
 
   _getWebhooksByServices() {
     return Object.entries(CONFIG.WEBHOOK)
       .filter(([_, config]) => config.IS_ENABLED && config.URL.trim() !== "")
-      .reduce((acc, [key, config]) => {
-        acc[key] = config.URL;
-        return acc;
+      .reduce((webhooks, [key, config]) => {
+        webhooks[key] = config.URL;
+        return webhooks;
       }, {});
   }
 
   isKeywordsChanged() {
     return this._searchKeywords && !this._arraysEqual(this._searchKeywords, CONFIG.KEYWORDS);
-  }
-
-  _isArchivingOnlyMode() {
-    return (
-      Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
-      config.ARCHIVING.IS_ENABLED
-    );
   }
 
   handleKeywordsChange() {
@@ -120,6 +124,20 @@ class NewsFetchingBotController {
     const message = `검색어 변경이 완료되었습니다. 이제부터 '${this._searchKeywords.join(", ")}' 키워드를 포함한 뉴스를 전송합니다.`;
     Logger.log(`[INFO] ${message}`);
     this._messagingService.sendMessage(`[네이버 뉴스봇] ${message}`);
+  }
+
+  initiateFirstRun() {
+    try {
+      Logger.log("[INFO] 뉴스봇 초기 설정을 시작합니다.");
+
+      const newsItems = this._fetchAndSendSampleNews();
+      this._saveInitialProperties({ isSampleNewsFetched: newsItems && newsItems.length > 0 });
+      this._sendWelcomeMessage();
+
+      PropertyManager.setProperty("initializationCompleted", "true");
+    } catch (error) {
+      this._handleInitializationError(error);
+    }
   }
 
   runDebug() {
@@ -142,7 +160,7 @@ class NewsFetchingBotController {
   }
 
   sendNewsItems() {
-    if (Object.keys(this._getWebhooksByServices()).length === 0) {
+    if (!this._isWebhookConfigured()) {
       Logger.log(
         "[INFO] 뉴스를 전송할 채팅 서비스가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.",
       );
@@ -177,7 +195,7 @@ class NewsFetchingBotController {
     }
 
     try {
-      const newsItems = this._isArchivingOnlyMode()
+      const newsItems = this._isArchivingOnlyMode
         ? this._newsFetchService.getFetchedNewsItems({ sortByDesc: true })
         : this._messagingService.getDeliveredNewsItems({ sortByDesc: true });
 
@@ -196,23 +214,25 @@ class NewsFetchingBotController {
   }
 
   updateProperties() {
-    const lastDeliveredNewsHashIds = this._isArchivingOnlyMode()
+    const lastDeliveredNewsHashIds = this._isArchivingOnlyMode
       ? this._archivingService.archivedNewsHashIds
       : this._messagingService.deliveredNewsHashIds;
 
-    const lastDeliveredNewsPubDate = this._isArchivingOnlyMode()
+    const lastDeliveredNewsPubDate = this._isArchivingOnlyMode
       ? this._archivingService.archivedLatestNewsPubDate
       : this._messagingService.deliveredLatestNewsPubDate;
 
-    PropertyManager.setProperty(
-      "lastDeliveredNewsHashIds",
-      JSON.stringify(lastDeliveredNewsHashIds),
-    );
+    this.savePropertiesWithParams({
+      searchKeywords: this._searchKeywords,
+      lastDeliveredNewsHashIds,
+      lastDeliveredNewsPubDate,
+    });
+  }
 
-    PropertyManager.setProperty(
-      "lastDeliveredNewsPubDate",
-      JSON.stringify(lastDeliveredNewsPubDate),
-    );
+  savePropertiesWithParams(params) {
+    Object.entries(params).forEach(([key, value]) => {
+      PropertyManager.setProperty(key, JSON.stringify(value));
+    });
   }
 
   printResults() {
@@ -221,10 +241,66 @@ class NewsFetchingBotController {
       return;
     }
 
-    const resultNumber = this._isArchivingOnlyMode()
+    const resultNumber = this._isArchivingOnlyMode
       ? this._newsFetchService.getFetchedNewsItems().length
       : this._messagingService.getDeliveredNewsItems().length;
 
     Logger.log(`[RESULT] 총 ${resultNumber}건의 뉴스 작업이 완료되었습니다.`);
+  }
+
+  _isWebhookConfigured() {
+    return Object.keys(this._getWebhooksByServices()).length > 0;
+  }
+
+  _fetchAndSendSampleNews() {
+    try {
+      const newsItems = this._newsFetchService.fetchNewsItems({
+        searchKeywords: this._searchKeywords,
+        display: 1,
+      });
+
+      if (newsItems.length > 0) {
+        Logger.log("[INFO] 등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.");
+        this._messagingService.sendNewsItems(newsItems);
+      } else {
+        Logger.log("[INFO] 모든 키워드에 대해 검색된 뉴스가 없습니다. 다음 단계로 넘어갑니다.");
+      }
+
+      return newsItems;
+    } catch (error) {
+      Logger.log(
+        `[ERROR] 뉴스 항목 전송 중 오류가 발생했습니다. 현재 작업을 종료하고 다음 단계로 넘어갑니다.\n오류 내용: ${error.message}`,
+      );
+      return [];
+    }
+  }
+
+  _saveInitialProperties({ isSampleNewsFetched }) {
+    const lastDeliveredNewsHashIds = this._messagingService.deliveredNewsHashIds;
+    const lastDeliveredNewsPubDate = isSampleNewsFetched
+      ? this._messagingService.deliveredLatestNewsPubDate
+      : this._lastDeliveredNewsPubDate;
+
+    this.savePropertiesWithParams({
+      searchKeywords: this._searchKeywords,
+      lastDeliveredNewsHashIds,
+      lastDeliveredNewsPubDate,
+    });
+  }
+
+  _sendWelcomeMessage() {
+    const welcomeMessage = `네이버 뉴스봇이 설치되었습니다. 앞으로 '${this._searchKeywords.join(", ")}' 키워드에 대한 최신 뉴스가 전송됩니다.`;
+
+    Logger.log(`[INFO] ${welcomeMessage}`);
+    this._messagingService.sendMessage(`[네이버 뉴스봇] ${welcomeMessage}`);
+  }
+
+  _handleInitializationError(error) {
+    const errorMessage = "뉴스봇 초기 설정 중 오류가 발생했습니다";
+
+    Logger.log(`[ERROR] ${errorMessage}: ${error.message}`);
+    this._messagingService.sendMessage(`[네이버 뉴스봇] ${errorMessage}. 관리자에게 문의해주세요.`);
+
+    throw error;
   }
 }
