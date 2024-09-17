@@ -67,7 +67,7 @@ class NewsFetchService {
       .filter(
         (newsItem) =>
           !this._lastDeliveredNewsHashIds.includes(newsItem.hashId) &&
-          this._isAfterLatestNewsItem(),
+          this._isAfterLatestNewsItem({ newsPubDate: newsItem.pubDate }),
       );
     if (newsItems.length === 0) return;
 
@@ -92,17 +92,19 @@ class NewsFetchService {
 
   /**
    * 뉴스 기사의 발행일이 지정된 시간 이후인지 확인합니다.
+   * @param {Object} params - 매개변수
+   * @param {Date} newsPubDate - 뉴스 게재 시각
    * @param {number} [subsetTime] - 발행일 기준 시각에서 추가로 뺄 밀리초 단위 시간 (선택)
    * @returns {boolean} 뉴스 기사의 발행일이 지정된 시간 이후인 경우 true, 그렇지 않은 경우 false
    */
-  _isAfterLatestNewsItem(subsetTime) {
+  _isAfterLatestNewsItem({ newsPubDate, subsetTime }) {
     const subsetTimeAmount = subsetTime && !Number.isNaN(subsetTime) ? subsetTime : 0;
-    return this._pubDate.getTime() >= this._lastDeliveredNewsPubDate.getTime() - subsetTimeAmount;
+    return newsPubDate.getTime() >= this._lastDeliveredNewsPubDate.getTime() - subsetTimeAmount;
   }
 
   /**
    * 뉴스 항목 객체를 생성합니다.
-   * @param {Object} newsItem - API로부터 å받아온 뉴스 항목 데이터
+   * @param {Object} newsItem - API로부터 받아온 뉴스 항목 데이터
    * @returns {NewsItem} 생성된 NewsItem 객체
    * @private
    */

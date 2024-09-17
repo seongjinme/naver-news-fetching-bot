@@ -14,7 +14,8 @@ class NewsFetchingBotController {
 
     this._searchKeywords = searchKeywords || [...CONFIG.KEYWORDS];
     this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
-    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate || new Date().getTime() - 60 * 1000;
+    this._lastDeliveredNewsPubDate =
+      lastDeliveredNewsPubDate || this._createInitialLastDeliveredNewsPubDate();
 
     this._newsFetchService = new NewsFetchService({
       apiUrl: "https://openapi.naver.com/v1/search/news.json",
@@ -250,6 +251,15 @@ class NewsFetchingBotController {
    */
   _isSearchKeywordsConfigured() {
     return this._searchKeywords && this._searchKeywords.length > 0;
+  }
+
+  /**
+   * 마지막으로 전송된 뉴스 게재 시각의 초기값을 반환합니다.
+   * @returns {Date} 마지막으로 전송된 뉴스 게재 시각 초기값
+   * @private
+   */
+  _createInitialLastDeliveredNewsPubDate() {
+    return new Date(new Date.getTime() - 60 * 1000);
   }
 
   /**
