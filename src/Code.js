@@ -38,6 +38,7 @@ function runNewsFetchingBot() {
     controller.sendNewsItems();
     controller.archiveNewsItems();
     controller.updateProperties();
+    controller.printResults();
   } catch (error) {
     Logger.log(`[ERROR] 에러로 인해 뉴스봇 구동을 중지합니다. 아래 메시지를 참고해 주세요.`);
 
@@ -62,8 +63,6 @@ function runNewsFetchingBot() {
     }
 
     Logger.log(`[ERROR] 예상치 못한 오류 발생: ${error.message}`);
-  } finally {
-    controller.printResults();
   }
 }
 

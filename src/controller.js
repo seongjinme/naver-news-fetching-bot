@@ -26,17 +26,15 @@ class NewsFetchingBotController {
       lastDeliveredNewsPubDate: this._lastDeliveredNewsPubDate,
     });
 
-    if (!CONFIG.DEBUG) {
-      this._messagingService = new MessagingService({
-        webhooks: this._getWebhooksByServices(),
-        newsCardGenerator: NewsCardGenerator,
-        messageGenerator: MessageGenerator,
-      });
+    this._messagingService = new MessagingService({
+      webhooks: this._getWebhooksByServices(),
+      newsCardGenerator: NewsCardGenerator,
+      messageGenerator: MessageGenerator,
+    });
 
-      this._archivingService = new ArchivingService({
-        config: CONFIG.ARCHIVING_SHEET.SHEET_INFO,
-      });
-    }
+    this._archivingService = new ArchivingService({
+      config: CONFIG.ARCHIVING.SHEET_INFO,
+    });
 
     this._isArchivingOnlyMode =
       Object.values(CONFIG.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
@@ -76,16 +74,18 @@ class NewsFetchingBotController {
         display: 1,
       });
 
-      const isSampleNewsFetched = sampleNewsItems && sampleNewsItems.length > 0;
-
-      if (fetchedNewsItems.length > 0) {
+      if (CONFIG.DEBUG) {
+        Logger.log("[INFO] 디버그 모드 실행: 등록된 검색 키워드별 최근 1개 뉴스를 로깅합니다.");
+        this._printFetchedNewsItems(sampleNewsItems);
+      } else {
         Logger.log("[INFO] 등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.");
         this.sendNewsItems();
-      } else {
-        Logger.log("[INFO] 모든 키워드에 대해 검색된 뉴스가 없습니다. 다음 단계로 넘어갑니다.");
       }
 
-      this._saveInitialProperties({ isSampleNewsFetched });
+      this._saveInitialProperties({
+        isSampleNewsFetched: sampleNewsItems && sampleNewsItems.length > 0,
+      });
+
       this._sendWelcomeMessage();
     } catch (error) {
       throw new InitializationError(error.message);
@@ -103,13 +103,7 @@ class NewsFetchingBotController {
         searchKeywords: this._searchKeywords,
       });
 
-      fetchedNewsItems.forEach((newsItem, index) => {
-        const { pubDateText, title, source, link, description, keywords } = newsItem.data;
-
-        Logger.log(`----- ${fetchedNewsItems.length}개 항목 중 ${index + 1}번째 -----`);
-        Logger.log(`${pubDateText}\n${title}\n${source}\n${link}\n${description}`);
-        Logger.log(`검색어: ${keywords.join(", ")}`);
-      });
+      this._printFetchedNewsItems(fetchedNewsItems);
     } catch (error) {
       Logger.log(`[ERROR] DEBUG 모드 구동 중 오류 발생: ${error.message}`);
     } finally {
@@ -245,21 +239,12 @@ class NewsFetchingBotController {
   }
 
   /**
-   * 뉴스 검색 키워드가 구성되어 있는지 확인합니다.
-   * @returns {boolean} 검색 키워드 구성 여부
-   * @private
-   */
-  _isSearchKeywordsConfigured() {
-    return this._searchKeywords && this._searchKeywords.length > 0;
-  }
-
-  /**
    * 마지막으로 전송된 뉴스 게재 시각의 초기값을 반환합니다.
    * @returns {Date} 마지막으로 전송된 뉴스 게재 시각 초기값
    * @private
    */
   _createInitialLastDeliveredNewsPubDate() {
-    return new Date(new Date.getTime() - 60 * 1000);
+    return new Date(new Date().getTime() - 60 * 1000);
   }
 
   /**
@@ -297,6 +282,28 @@ class NewsFetchingBotController {
   }
 
   /**
+   * 뉴스 항목들을 GAS 환경의 Logger로 로깅하여 프린트합니다.
+   * @param {Object} params - 매개변수
+   * @param {NewsItem[]} params.newsitems - 뉴스 항목들
+   * @private
+   */
+  _printFetchedNewsItems(newsItems) {
+    if (newsItems && newsItems.length > 0) {
+      newsItems.forEach((newsItem, index) => {
+        const { pubDateText, title, source, link, description, keywords } = newsItem.data;
+
+        Logger.log(`----- ${newsItems.length}개 항목 중 ${index + 1}번째 -----`);
+        Logger.log(`${pubDateText}\n${title}\n${source}\n${link}\n${description}`);
+        Logger.log(`검색어: ${keywords.join(", ")}`);
+      });
+
+      Logger.log(`[INFO] ${newsItems.length}개 항목에 대한 로깅 작업을 완료했습니다.`);
+    }
+
+    Logger.log("[INFO] 모든 키워드에 대해 검색된 뉴스가 없습니다. 로깅 작업을 종료합니다.");
+  }
+
+  /**
    * 뉴스봇 첫 구동 후 설치가 성공적으로 완료되었을 경우, 환영 메시지를 전송합니다.
    * @private
    */
@@ -304,6 +311,9 @@ class NewsFetchingBotController {
     const welcomeMessage = `네이버 뉴스봇이 설치되었습니다. 앞으로 '${this._searchKeywords.join(", ")}' 키워드에 대한 최신 뉴스가 전송됩니다.`;
 
     Logger.log(`[INFO] ${welcomeMessage}`);
-    this._messagingService.sendMessage(`[네이버 뉴스봇] ${welcomeMessage}`);
+
+    if (!CONFIG.DEBUG) {
+      this._messagingService.sendMessage(`[네이버 뉴스봇] ${welcomeMessage}`);
+    }
   }
 }
