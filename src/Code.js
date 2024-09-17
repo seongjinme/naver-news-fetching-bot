@@ -56,6 +56,11 @@ function runNewsFetchingBot() {
       return;
     }
 
+    if (error instanceof InitializationError) {
+      Logger.log(`[ERROR] 뉴스봇 초기 설정 중 오류 발생: ${error.message}`);
+      return;
+    }
+
     Logger.log(`[ERROR] 예상치 못한 오류 발생: ${error.message}`);
   } finally {
     controller.printResults();
