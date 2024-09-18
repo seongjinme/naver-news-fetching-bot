@@ -86,7 +86,7 @@ function getControllerProperties() {
       ? JSON.parse(savedLastDeliveredNewsHashIds)
       : [],
     lastDeliveredNewsPubDate: savedLastDeliveredNewsPubDate
-      ? new Date(parseFloat(savedLastDeliveredNewsPubDate))
+      ? new Date(JSON.parse(savedLastDeliveredNewsPubDate))
       : null,
     isFirstRun: !(savedInitializationCompleted && savedInitializationCompleted === "true"),
   };
