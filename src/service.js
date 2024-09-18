@@ -150,6 +150,22 @@ class NewsFetchService {
   getFetchedNewsItems({ sortByDesc }) {
     return this._fetchedNewsItems.getNewsItems({ sortByDesc });
   }
+
+  /**
+   * 수신 완료된 뉴스 기사들의 Hash ID값 배열을 반환합니다.
+   * @returns {string[]} 수신 완료된 뉴스 기사들의 Hash ID 배열
+   */
+  get fetchedNewsHashIds() {
+    return this._fetchedNewsItems.newsHashIds;
+  }
+
+  /**
+   * 수신 완료된 가장 최신 뉴스의 pubDate를 반환합니다.
+   * @returns {Date|null} 가장 최신 뉴스의 pubDate 혹은 null
+   */
+  get fetchedLatestNewsPubDate() {
+    return this._fetchedNewsItems.latestNewsPubDate;
+  }
 }
 
 /**

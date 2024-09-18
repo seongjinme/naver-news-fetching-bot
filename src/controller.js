@@ -82,10 +82,7 @@ class NewsFetchingBotController {
         this.sendNewsItems();
       }
 
-      this._saveInitialProperties({
-        isSampleNewsFetched: sampleNewsItems && sampleNewsItems.length > 0,
-      });
-
+      this._saveInitialProperties();
       this._sendWelcomeMessage();
     } catch (error) {
       throw new InitializationError(error.message);
@@ -199,7 +196,7 @@ class NewsFetchingBotController {
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
       lastDeliveredNewsHashIds,
-      lastDeliveredNewsPubDate,
+      lastDeliveredNewsPubDate: lastDeliveredNewsPubDate ?? this._lastDeliveredNewsPubDate,
     });
   }
 
@@ -263,20 +260,14 @@ class NewsFetchingBotController {
 
   /**
    * 뉴스봇의 첫 구동때 설정된 초기 설정값을 저장합니다.
-   * @param {Object} params - 저장할 속성 매개변수
-   * @param {boolean} params.isSampleNewsFetched - 샘플 뉴스 가져오기 성공 여부
    * @private
    */
-  _saveInitialProperties({ isSampleNewsFetched }) {
-    const lastDeliveredNewsHashIds = this._messagingService.deliveredNewsHashIds;
-    const lastDeliveredNewsPubDate = isSampleNewsFetched
-      ? this._messagingService.deliveredLatestNewsPubDate
-      : this._lastDeliveredNewsPubDate;
-
+  _saveInitialProperties() {
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
-      lastDeliveredNewsHashIds,
-      lastDeliveredNewsPubDate,
+      lastDeliveredNewsHashIds: this._newsFetchService.fetchedNewsHashIds,
+      lastDeliveredNewsPubDate:
+        this._newsFetchService.fetchedLatestNewsPubDate ?? this._lastDeliveredNewsPubDate,
       initializationCompleted: true,
     });
   }
