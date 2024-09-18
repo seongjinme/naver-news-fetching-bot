@@ -298,6 +298,7 @@ class NewsFetchingBotController {
       });
 
       Logger.log(`[INFO] ${newsItems.length}개 항목에 대한 로깅 작업을 완료했습니다.`);
+      return;
     }
 
     Logger.log("[INFO] 모든 키워드에 대해 검색된 뉴스가 없습니다. 로깅 작업을 종료합니다.");
