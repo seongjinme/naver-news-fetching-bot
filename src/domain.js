@@ -18,7 +18,7 @@ class NewsItem {
     this._source = source;
     this._description = description;
     this._pubDate = pubDate;
-    this._keywords = [].push(keyword);
+    this._keywords = [keyword];
     this._hashId = this._createHashId({ newsItemUrl: link });
   }
 
@@ -99,7 +99,7 @@ class NewsItem {
       source: this._source,
       description: this._description,
       pubDateText: Utilities.formatDate(this._pubDate, "GMT+9", "yyyy-MM-dd HH:mm:ss"),
-      keywords: [...this._keywords],
+      keywords: this.keywords,
     };
   }
 

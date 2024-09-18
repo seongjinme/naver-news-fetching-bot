@@ -63,7 +63,7 @@ class NewsFetchService {
     if (fetchedNewsItems.length === 0) return;
 
     const newsItems = fetchedNewsItems
-      .map((item) => this._createNewsItem(item))
+      .map((newsItem) => this._createNewsItem({ newsItem, searchKeyword }))
       .filter(
         (newsItem) =>
           !this._lastDeliveredNewsHashIds.includes(newsItem.hashId) &&
@@ -104,17 +104,20 @@ class NewsFetchService {
 
   /**
    * 뉴스 항목 객체를 생성합니다.
-   * @param {Object} newsItem - API로부터 받아온 뉴스 항목 데이터
+   * @param {Object} params - 매개변수
+   * @param {Object} params.newsItem - API로부터 받아온 뉴스 항목 데이터
+   * @param {string} params.searchKeyword - 해당 뉴스 항목의 검색어
    * @returns {NewsItem} 생성된 NewsItem 객체
    * @private
    */
-  _createNewsItem(newsItem) {
+  _createNewsItem({ newsItem, searchKeyword }) {
     return new NewsItem({
       title: getBleachedText(newsItem.title),
       link: newsItem.link,
       source: this._newsSourceFinder.getSourceByLink(newsItem.originallink),
       description: getBleachedText(newsItem.description),
       pubDate: new Date(newsItem.pubDate),
+      keyword: searchKeyword,
     });
   }
 
