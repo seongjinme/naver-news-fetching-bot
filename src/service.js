@@ -170,42 +170,51 @@ class NewsSourceFinder {
    * @returns {string} 찾은 뉴스 소스 (찾지 못한 경우 도메인 또는 "(알수없음)" 반환)
    */
   getSourceByLink(originalLink) {
-    const domain = this._extractDomain(originalLink);
+    const address = this._extractAddress(originalLink);
+    const domain = this._extractDomainFromAddress(address);
 
     if (!domain) {
       return "(알수없음)";
     }
 
-    const index = this._findSourceIndex(originalLink);
+    const index = this._findSourceIndexFromAddress(address);
 
     return index !== -1 ? this._sources[index][1] : domain;
   }
 
   /**
-   * URL에서 도메인을 추출하여 반환합니다.
-   * @param {string} url - 도메인을 추출할 URL
+   * 주어진 주소(address)에서 도메인을 추출하여 반환합니다.
+   * @param {string} address - 도메인을 추출할 주소 정보
    * @returns {string|null} 추출된 도메인 (도메인이 없는 경우 null 반환)
    * @private
    */
-  _extractDomain(url) {
-    const address = url
+  _extractDomainFromAddress(address) {
+    const domain = address.match(/^([^:\/\n\?\=]+)/);
+    return domain ? domain[0] : null;
+  }
+
+  /**
+   * URL에서 프로토콜(http/https) 정보 및 일부 서브 도메인 등 불필요한 요소를 제거한 주소를 반환합니다.
+   * @param {string} url - 주소를 추출할 URL
+   * @returns {string} 추출된 주소
+   * @private
+   */
+  _extractAddress(url) {
+    return url
       .toLowerCase()
       .replace(
         /^(https?:\/?\/?)?(\/?\/?www\.)?(\/?\/?news\.)?(\/?\/?view\.)?(\/?\/?post\.)?(\/?\/?photo\.)?(\/?\/?photos\.)?(\/?\/?blog\.)?/,
         "",
       );
-    const domain = address.match(/^([^:\/\n\?\=]+)/);
-
-    return domain ? domain[0] : null;
   }
 
   /**
    * 이진 탐색을 사용하여 뉴스 소스의 인덱스를 찾습니다.
-   * @param {string} url - 도메인을 탐색할 URL
+   * @param {string} address - 도메인을 탐색할 뉴스 주소 정보
    * @returns {number} 찾은 뉴스 소스의 인덱스 (찾지 못한 경우 -1 반환)
    * @private
    */
-  _findSourceIndex(url) {
+  _findSourceIndexFromAddress(address) {
     let left = 0;
     let right = this._sources.length - 1;
 
@@ -214,11 +223,11 @@ class NewsSourceFinder {
       const source = this._sources[mid];
       const sourceUrl = source[0];
 
-      if (url.startsWith(sourceUrl)) {
-        return this._findSubpathIndex({ url, index: mid });
+      if (address.startsWith(sourceUrl)) {
+        return this._findSubpathIndex({ address, index: mid });
       }
 
-      if (url < sourceUrl) {
+      if (address < sourceUrl) {
         right = mid - 1;
       } else {
         left = mid + 1;
@@ -231,17 +240,17 @@ class NewsSourceFinder {
   /**
    * 하위 경로를 확인하여 최종 뉴스 소스의 인덱스를 찾습니다.
    * @param {Object} params - 탐색 매개변수
-   * @param {string} params.url - 검색할 URL
+   * @param {string} params.address - 검색할 주소 정보
    * @param {number} params.index - 시작 인덱스
    * @returns {number} 최종 뉴스 소스의 인덱스
    * @private
    */
-  _findSubpathIndex({ url, index }) {
+  _findSubpathIndex({ address, index }) {
     let subpathIndex = index;
 
     while (
       subpathIndex + 1 < this._sources.length &&
-      url.startsWith(this._sources[subpathIndex + 1][0])
+      address.startsWith(this._sources[subpathIndex + 1][0])
     ) {
       subpathIndex += 1;
     }
