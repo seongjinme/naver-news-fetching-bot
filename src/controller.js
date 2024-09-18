@@ -187,18 +187,18 @@ class NewsFetchingBotController {
    * 뉴스봇 구동에 필요한 설정값들을 업데이트하여 저장합니다.
    */
   updateProperties() {
-    const lastDeliveredNewsHashIds = this._isArchivingOnlyMode
+    const newHashIds = this._isArchivingOnlyMode
       ? this._archivingService.archivedNewsHashIds
       : this._messagingService.deliveredNewsHashIds;
 
-    const lastDeliveredNewsPubDate = this._isArchivingOnlyMode
+    const newPubDate = this._isArchivingOnlyMode
       ? this._archivingService.archivedLatestNewsPubDate
       : this._messagingService.deliveredLatestNewsPubDate;
 
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
-      lastDeliveredNewsHashIds,
-      lastDeliveredNewsPubDate: lastDeliveredNewsPubDate ?? this._lastDeliveredNewsPubDate,
+      lastDeliveredNewsHashIds: newHashIds.length > 0 ? newHashIds : this._lastDeliveredNewsHashIds,
+      lastDeliveredNewsPubDate: newPubDate ?? this._lastDeliveredNewsPubDate,
     });
   }
 
