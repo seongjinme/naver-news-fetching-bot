@@ -46,7 +46,7 @@ class NewsFetchingBotController {
    * @returns {boolean} 키워드 변경 여부
    */
   isKeywordsChanged() {
-    return this._searchKeywords && isTwoArraysEqual(this._searchKeywords, CONFIG.KEYWORDS);
+    return this._searchKeywords && !isTwoArraysEqual(this._searchKeywords, CONFIG.KEYWORDS);
   }
 
   /**
@@ -94,9 +94,9 @@ class NewsFetchingBotController {
    */
   runDebug() {
     try {
-      Logger.log("[INFO] DEBUG 모드가 켜져 있습니다.");
-      Logger.log("- 뉴스를 가져와 로깅하는 작업만 수행합니다.");
-      Logger.log("- 최근 뉴스 목록, 최종 게재 시각 등의 정보는 별도로 저장되지 않습니다.");
+      Logger.log(
+        "[INFO] DEBUG 모드가 켜져 있습니다.\n- 뉴스를 가져와 로깅하는 작업만 수행합니다.\n- 최근 뉴스 목록, 최종 게재 시각 등의 정보는 별도로 저장되지 않습니다.",
+      );
 
       const fetchedNewsItems = this._newsFetchService.fetchNewsItems({
         searchKeywords: this._searchKeywords,
@@ -287,7 +287,7 @@ class NewsFetchingBotController {
 
         Logger.log(`----- ${newsItems.length}개 항목 중 ${index + 1}번째 -----`);
         Logger.log(
-          `게재 시각: ${pubDateText}\n기사 제목: ${title}\n기사 출처: ${source}\n원문 링크: ${link}\n본문 내용: ${description}, 검색어: ${keywords.join(", ")}`,
+          `게재시각: ${pubDateText}\n기사제목: ${title}\n기사출처: ${source}\n원문링크: ${link}\n본문내용: ${description}\n검색어: ${keywords.join(", ")}`,
         );
       });
 
