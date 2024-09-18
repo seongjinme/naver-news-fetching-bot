@@ -137,7 +137,7 @@ class NewsFetchingBotController {
     }
 
     try {
-      const fetchedNewsItems = this._newsFetchService.getFetchedNewsItems();
+      const fetchedNewsItems = this._newsFetchService.getFetchedNewsItems({ sortByDesc: false });
 
       if (fetchedNewsItems.length === 0) {
         Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
@@ -222,8 +222,8 @@ class NewsFetchingBotController {
     }
 
     const resultNumber = this._isArchivingOnlyMode
-      ? this._newsFetchService.getFetchedNewsItems().length
-      : this._messagingService.getDeliveredNewsItems().length;
+      ? this._archivingService.archivedNewsItemsSize
+      : this._messagingService.deliveredNewsItemsSize;
 
     Logger.log(`[RESULT] 총 ${resultNumber}건의 뉴스 작업이 완료되었습니다.`);
   }

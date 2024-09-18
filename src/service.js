@@ -166,6 +166,14 @@ class NewsFetchService {
   get fetchedLatestNewsPubDate() {
     return this._fetchedNewsItems.latestNewsPubDate;
   }
+
+  /**
+   * 수신 완료된 뉴스들의 수량을 반환합니다.
+   * @returns {Date|null} 수신 완료된 뉴스 기사들의 수량
+   */
+  get fetchedNewsItemsSize() {
+    return this._fetchedNewsItems.size;
+  }
 }
 
 /**
@@ -382,6 +390,14 @@ class MessagingService {
   get deliveredLatestNewsPubDate() {
     return this._deliveredNewsItems.latestNewsPubDate;
   }
+
+  /**
+   * 전송 완료된 뉴스들의 수량을 반환합니다.
+   * @returns {Date|null} 전송 완료된 뉴스 기사들의 수량
+   */
+  get deliveredNewsItemsSize() {
+    return this._deliveredNewsItems.size;
+  }
 }
 
 /**
@@ -481,6 +497,16 @@ class ArchivingService {
   }
 
   /**
+   * 저장 완료된 뉴스 기사들에 대한 정보를 반환합니다.
+   * @param {Object} params - 저장 완료된 뉴스 기사들의 정보 조회 옵션
+   * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
+   * @returns {NewsItem[]} 저장 완료된 뉴스 기사들
+   */
+  getArchivedNewsItems({ sortByDesc }) {
+    return this._archivedNewsItems.getNewsItems({ sortByDesc });
+  }
+
+  /**
    * 저장 완료된 뉴스 기사들의 Hash ID값 배열을 반환합니다.
    * @returns {string[]} 저장 완료된 뉴스 기사들의 Hash ID 배열
    */
@@ -494,5 +520,13 @@ class ArchivingService {
    */
   get archivedLatestNewsPubDate() {
     return this._archivedNewsItems.latestNewsPubDate;
+  }
+
+  /**
+   * 저장 완료된 뉴스들의 수량을 반환합니다.
+   * @returns {Date|null} 저장 완료된 뉴스 기사들의 수량
+   */
+  get archivedNewsItemsSize() {
+    return this._archivedNewsItems.size;
   }
 }
