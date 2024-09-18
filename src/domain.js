@@ -19,34 +19,34 @@ class NewsItem {
     this._description = description;
     this._pubDate = pubDate;
     this._keywords = [].push(keyword);
-    this._hashId = this._createHashId();
+    this._hashId = this._createHashId({ newsItemUrl: link });
   }
 
   /**
    * 뉴스 기사의 고유한 해시 ID값을 생성합니다.
+   * @param {Object} params - 매개변수
+   * @param {string} newsItemUrl - 뉴스 기사 URL 주소
+   * @param {number} hashIdLength - 생성할 해시 ID값의 길이
    * @returns {string} 생성된 해시 ID값
    */
-  _createHashId() {
+  _createHashId({ newsItemUrl, hashIdLength = 10 }) {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-    const hash = Array.from({ length: this._link.length }).reduce((acc, _, index) => {
-      return ((acc << 5) - acc + this._link.charCodeAt(index)) | 0;
+    // 해싱 연산용 소수 및 모듈러 설정
+    const prime = 31;
+    const mod = 1e9 + 9;
+
+    let hash = Array.from({ length: newsItemUrl.length }).reduce((acc, _, index) => {
+      return (acc * prime + newsItemUrl.charCodeAt(index)) % mod;
     }, 0);
 
-    const hashId = Array.from({ length: 20 }).reduce(
-      (acc, _) => {
-        const index = Math.abs(hash % characters.length);
-        const character = characters[index];
+    return Array.from({ length: hashIdLength }).reduce((hashId) => {
+      const index = Math.abs(hash % characters.length);
+      hashId += characters[index];
+      hash = (hash * prime + index) % mod;
 
-        return {
-          hashId: acc.hashId + character,
-          hash: Math.floor(hash / characters.length),
-        };
-      },
-      { hashId: "", hash },
-    ).hashId;
-
-    return hashId;
+      return hashId;
+    }, "");
   }
 
   /**
