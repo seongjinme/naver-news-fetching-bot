@@ -17,10 +17,9 @@
  */
 function runNewsFetchingBot() {
   try {
-    const controllerProperties = getControllerProperties();
-    const controller = new NewsFetchingBotController(controllerProperties);
+    const controller = new NewsFetchingBotController();
 
-    if (controllerProperties.isFirstRun) {
+    if (controller.isFirstRun()) {
       controller.initiateFirstRun();
       return;
     }
@@ -64,30 +63,4 @@ function runNewsFetchingBot() {
 
     Logger.log(`[ERROR] 예상치 못한 오류 발생: ${error.message}`);
   }
-}
-
-/**
- * 컨트롤러 속성을 가져옵니다.
- * @returns {Object} 컨트롤러 속성 객체
- * @property {Array<string>|null} searchKeywords - 저장된 검색 키워드 목록
- * @property {Array<string>} lastDeliveredNewsHashIds - 마지막으로 전달된 뉴스 항목의 해시 ID 목록
- * @property {Date|null} lastDeliveredNewsPubDate - 마지막으로 전달된 뉴스의 발행 날짜
- * @property {boolean} isFirstRun - 최초 실행 여부
- */
-function getControllerProperties() {
-  const savedSearchKeywords = PropertyManager.getProperty("searchKeywords");
-  const savedLastDeliveredNewsHashIds = PropertyManager.getProperty("lastDeliveredNewsHashIds");
-  const savedLastDeliveredNewsPubDate = PropertyManager.getProperty("lastDeliveredNewsPubDate");
-  const savedInitializationCompleted = PropertyManager.getProperty("initializationCompleted");
-
-  return {
-    searchKeywords: savedSearchKeywords ? JSON.parse(savedSearchKeywords) : null,
-    lastDeliveredNewsHashIds: savedLastDeliveredNewsHashIds
-      ? JSON.parse(savedLastDeliveredNewsHashIds)
-      : [],
-    lastDeliveredNewsPubDate: savedLastDeliveredNewsPubDate
-      ? new Date(JSON.parse(savedLastDeliveredNewsPubDate))
-      : null,
-    isFirstRun: !(savedInitializationCompleted && savedInitializationCompleted === "true"),
-  };
 }

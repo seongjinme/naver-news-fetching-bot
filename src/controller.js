@@ -4,18 +4,18 @@
 class NewsFetchingBotController {
   /**
    * NewsFetchingBotController의 생성자입니다.
-   * @param {Object} params - 초기화 매개변수
-   * @param {string[]|null} params.searchKeywords - 검색 키워드 목록
-   * @param {string[]} params.lastDeliveredNewsHashIds - 마지막으로 전달된 뉴스 항목의 해시 ID 목록
-   * @param {Date|null} params.lastDeliveredNewsPubDate - 마지막으로 전달된 뉴스의 발행 날짜
    */
-  constructor({ searchKeywords, lastDeliveredNewsHashIds, lastDeliveredNewsPubDate }) {
+  constructor() {
     validateConfig(CONFIG);
+
+    const { searchKeywords, lastDeliveredNewsHashIds, lastDeliveredNewsPubDate, isFirstRun } =
+      this._getControllerProperties();
 
     this._searchKeywords = searchKeywords || [...CONFIG.KEYWORDS];
     this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
     this._lastDeliveredNewsPubDate =
       lastDeliveredNewsPubDate || this._createInitialLastDeliveredNewsPubDate();
+    this._isFirstRun = isFirstRun;
 
     this._newsFetchService = new NewsFetchService({
       apiUrl: "https://openapi.naver.com/v1/search/news.json",
@@ -39,6 +39,14 @@ class NewsFetchingBotController {
     this._isArchivingOnlyMode =
       Object.values(CONFIG.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
       CONFIG.ARCHIVING.IS_ENABLED;
+  }
+
+  /**
+   * 뉴스봇 최초 실행 여부를 반환합니다.
+   * @returns {boolean} 뉴스봇 최초 실행 여부
+   */
+  isFirstRun() {
+    return this._isFirstRun;
   }
 
   /**
@@ -226,6 +234,34 @@ class NewsFetchingBotController {
       : this._messagingService.deliveredNewsItemsSize;
 
     Logger.log(`[RESULT] 총 ${resultNumber}건의 뉴스 작업이 완료되었습니다.`);
+  }
+
+  /**
+   * 뉴스봇 컨트롤러 구동에 필요한 속성들을 PropertiesService로부터 가져옵니다.
+   * @typedef {Object} ControllerProperties
+   * @property {Array<string>|null} searchKeywords - 저장된 검색 키워드 목록
+   * @property {Array<string>} lastDeliveredNewsHashIds - 마지막으로 전달된 뉴스 항목의 해시 ID 목록
+   * @property {Date|null} lastDeliveredNewsPubDate - 마지막으로 전달된 뉴스의 발행 날짜
+   * @property {boolean} isFirstRun - 최초 실행 여부
+   * @returns {ControllerProperties}
+   * @private
+   */
+  _getControllerProperties() {
+    const savedSearchKeywords = PropertyManager.getProperty("searchKeywords");
+    const savedLastDeliveredNewsHashIds = PropertyManager.getProperty("lastDeliveredNewsHashIds");
+    const savedLastDeliveredNewsPubDate = PropertyManager.getProperty("lastDeliveredNewsPubDate");
+    const savedInitializationCompleted = PropertyManager.getProperty("initializationCompleted");
+
+    return {
+      searchKeywords: savedSearchKeywords ? JSON.parse(savedSearchKeywords) : null,
+      lastDeliveredNewsHashIds: savedLastDeliveredNewsHashIds
+        ? JSON.parse(savedLastDeliveredNewsHashIds)
+        : [],
+      lastDeliveredNewsPubDate: savedLastDeliveredNewsPubDate
+        ? new Date(JSON.parse(savedLastDeliveredNewsPubDate))
+        : null,
+      isFirstRun: !(savedInitializationCompleted && savedInitializationCompleted === "true"),
+    };
   }
 
   /**
