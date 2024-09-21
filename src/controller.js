@@ -229,6 +229,11 @@ class NewsFetchingBotController {
       return;
     }
 
+    if (this._fetchingService.newsItemsSize === 0) {
+      Logger.log("[RESULT] 새로 게재된 된 뉴스 항목이 없습니다. 작업을 종료합니다.");
+      return;
+    }
+
     const resultNumber = this._isArchivingOnlyMode
       ? this._archivingService.newsItemsSize
       : this._messagingService.newsItemsSize;

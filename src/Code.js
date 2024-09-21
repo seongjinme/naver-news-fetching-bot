@@ -33,9 +33,11 @@ function runNewsFetchingBot() {
       return;
     }
 
-    controller.fetchNewsItems();
-    controller.sendNewsItems();
-    controller.archiveNewsItems();
+    if (controller.fetchNewsItems().length > 0) {
+      controller.sendNewsItems();
+      controller.archiveNewsItems();
+    }
+
     controller.updateProperties();
     controller.printResults();
   } catch (error) {
