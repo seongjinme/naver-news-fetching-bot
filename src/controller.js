@@ -17,7 +17,7 @@ class NewsFetchingBotController {
       lastDeliveredNewsPubDate || this._createInitialLastDeliveredNewsPubDate();
     this._isFirstRun = isFirstRun;
 
-    this._newsFetchService = new NewsFetchService({
+    this._fetchingService = new FetchingService({
       apiUrl: "https://openapi.naver.com/v1/search/news.json",
       clientId: CONFIG.NAVER_API_CLIENT.ID,
       clientSecret: CONFIG.NAVER_API_CLIENT.SECRET,
@@ -77,7 +77,7 @@ class NewsFetchingBotController {
     try {
       Logger.log("[INFO] 뉴스봇 초기 설정을 시작합니다.");
 
-      const sampleNewsItems = this._newsFetchService.fetchNewsItems({
+      const sampleNewsItems = this._fetchingService.fetchNewsItems({
         searchKeywords: this._searchKeywords,
         display: 1,
       });
@@ -106,7 +106,7 @@ class NewsFetchingBotController {
         "[INFO] DEBUG 모드가 켜져 있습니다.\n- 뉴스를 가져와 로깅하는 작업만 수행합니다.\n- 최근 뉴스 목록, 최종 게재 시각 등의 정보는 별도로 저장되지 않습니다.",
       );
 
-      const fetchedNewsItems = this._newsFetchService.fetchNewsItems({
+      const fetchedNewsItems = this._fetchingService.fetchNewsItems({
         searchKeywords: this._searchKeywords,
       });
 
@@ -125,7 +125,7 @@ class NewsFetchingBotController {
    */
   fetchNewsItems() {
     try {
-      return this._newsFetchService.fetchNewsItems({
+      return this._fetchingService.fetchNewsItems({
         searchKeywords: this._searchKeywords,
       });
     } catch (error) {
@@ -145,7 +145,7 @@ class NewsFetchingBotController {
     }
 
     try {
-      const fetchedNewsItems = this._newsFetchService.getFetchedNewsItems({ sortByDesc: false });
+      const fetchedNewsItems = this._fetchingService.getNewsItems({ sortByDesc: false });
 
       if (fetchedNewsItems.length === 0) {
         Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
@@ -174,8 +174,8 @@ class NewsFetchingBotController {
 
     try {
       const newsItems = this._isArchivingOnlyMode
-        ? this._newsFetchService.getFetchedNewsItems({ sortByDesc: true })
-        : this._messagingService.getDeliveredNewsItems({ sortByDesc: true });
+        ? this._fetchingService.getNewsItems({ sortByDesc: true })
+        : this._messagingService.getNewsItems({ sortByDesc: true });
 
       if (newsItems.length === 0) {
         Logger.log("[INFO] 저장할 새 뉴스 항목이 없습니다.");
@@ -196,12 +196,12 @@ class NewsFetchingBotController {
    */
   updateProperties() {
     const newHashIds = this._isArchivingOnlyMode
-      ? this._archivingService.archivedNewsHashIds
-      : this._messagingService.deliveredNewsHashIds;
+      ? this._archivingService.newsHashIds
+      : this._messagingService.newsHashIds;
 
     const newPubDate = this._isArchivingOnlyMode
-      ? this._archivingService.archivedLatestNewsPubDate
-      : this._messagingService.deliveredLatestNewsPubDate;
+      ? this._archivingService.latestNewsPubDate
+      : this._messagingService.latestNewsPubDate;
 
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
@@ -230,8 +230,8 @@ class NewsFetchingBotController {
     }
 
     const resultNumber = this._isArchivingOnlyMode
-      ? this._archivingService.archivedNewsItemsSize
-      : this._messagingService.deliveredNewsItemsSize;
+      ? this._archivingService.newsItemsSize
+      : this._messagingService.newsItemsSize;
 
     Logger.log(`[RESULT] 총 ${resultNumber}건의 뉴스 작업이 완료되었습니다.`);
   }
@@ -303,9 +303,8 @@ class NewsFetchingBotController {
   _saveInitialProperties() {
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
-      lastDeliveredNewsHashIds: this._newsFetchService.fetchedNewsHashIds,
-      lastDeliveredNewsPubDate:
-        this._newsFetchService.fetchedLatestNewsPubDate ?? this._lastDeliveredNewsPubDate,
+      lastDeliveredNewsHashIds: this._fetchingService.newsHashIds,
+      lastDeliveredNewsPubDate: this._fetchingService.newsPubDate ?? this._lastDeliveredNewsPubDate,
       initializationCompleted: true,
     });
   }

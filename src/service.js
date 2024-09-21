@@ -1,9 +1,62 @@
 /**
- * NewsFetchService는 네이버 오픈 API를 통해 검색어가 포함된 뉴스 기사를 가져와 처리합니다.
+ * BaseNewsService는 뉴스 관련 서비스들의 기본 클래스로, 뉴스 데이터 관리를 위한 공통 기능을 제공합니다.
+ * FetchingService, MessagingService, ArchivingService가 이 클래스를 상속받아 사용합니다.
  */
-class NewsFetchService {
+class BaseNewsService {
   /**
-   * NewsFetchService 클래스의 생성자입니다.
+   * BaseNewsService의 생성자입니다.
+   * NewsItemMap 인스턴스를 초기화합니다.
+   */
+  constructor() {
+    /**
+     * 뉴스 아이템들을 저장하고 관리하는 NewsItemMap 인스턴스입니다.
+     * @protected
+     * @type {NewsItemMap}
+     */
+    this._newsItems = new NewsItemMap();
+  }
+
+  /**
+   * 저장된 뉴스 아이템들을 반환합니다.
+   * @param {Object} options - 정렬 옵션
+   * @param {boolean} [options.sortByDesc] - true일 경우 내림차순으로 정렬
+   * @returns {NewsItem[]} 뉴스 아이템 배열
+   */
+  getNewsItems({ sortByDesc }) {
+    return this._newsItems.getNewsItems({ sortByDesc });
+  }
+
+  /**
+   * 저장된 뉴스 아이템들의 해시 ID 배열을 반환합니다.
+   * @returns {string[]} 뉴스 아이템 해시 ID 배열
+   */
+  get newsHashIds() {
+    return this._newsItems.newsHashIds;
+  }
+
+  /**
+   * 저장된 뉴스 아이템 중 가장 최근의 발행 날짜를 반환합니다.
+   * @returns {Date|null} 가장 최근 뉴스의 발행 날짜, 또는 뉴스가 없는 경우 null
+   */
+  get latestNewsPubDate() {
+    return this._newsItems.latestNewsPubDate;
+  }
+
+  /**
+   * 저장된 뉴스 아이템의 개수를 반환합니다.
+   * @returns {number} 뉴스 아이템 개수
+   */
+  get newsItemsSize() {
+    return this._newsItems.size;
+  }
+}
+
+/**
+ * FetchingService는 네이버 오픈 API를 통해 검색어가 포함된 뉴스 기사를 가져와 처리합니다.
+ */
+class FetchingService extends BaseNewsService {
+  /**
+   * FetchingService 클래스의 생성자입니다.
    * @param {Object} params - 생성자 매개변수
    * @param {string} params.apiUrl - 네이버 뉴스 검색 API URL
    * @param {string} params.clientId - 네이버 API 클라이언트 ID
@@ -20,6 +73,7 @@ class NewsFetchService {
     lastDeliveredNewsHashIds,
     lastDeliveredNewsPubDate,
   }) {
+    super();
     this._apiUrl = apiUrl;
     this._fetchOptions = {
       method: "get",
@@ -29,7 +83,6 @@ class NewsFetchService {
       },
     };
     this._newsSourceFinder = new NewsSourceFinder(newsSource);
-    this._fetchedNewsItems = new NewsItemMap();
     this._lastDeliveredNewsHashIds = [...lastDeliveredNewsHashIds];
     this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate;
   }
@@ -47,7 +100,7 @@ class NewsFetchService {
       this._fetchNewsItemsForEachKeyword({ searchKeyword, display });
     });
 
-    return this.getFetchedNewsItems({ sortByDesc });
+    return this.getNewsItems({ sortByDesc });
   }
 
   /**
@@ -71,7 +124,7 @@ class NewsFetchService {
       );
     if (newsItems.length === 0) return;
 
-    this._fetchedNewsItems.addNewsItems(newsItems);
+    this._newsItems.addNewsItems(newsItems);
   }
 
   /**
@@ -140,39 +193,185 @@ class NewsFetchService {
 
     return `${this._apiUrl}?${searchParams}`;
   }
+}
 
+/**
+ * 다양한 채널로 메시지와 뉴스 아이템을 전송하는 서비스 클래스입니다.
+ */
+class MessagingService extends BaseNewsService {
   /**
-   * 수신 완료된 뉴스 기사들에 대한 정보를 반환합니다.
-   * @param {Object} params - 수신 완료된 뉴스 기사들의 정보 조회 옵션
-   * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
-   * @returns {NewsItem[]} 수신 완료된 뉴스 기사들
+   * MessagingService 클래스의 생성자입니다.
+   * @param {Object} params - 설정 객체
+   * @param {Object.<string, string>} params.webhooks - 채널별 웹훅 URL 객체
+   * @param {Object} params.newsCardGenerator - 뉴스 카드 생성기 객체
+   * @param {Object} params.messageGenerator - 메시지 생성기 객체
    */
-  getFetchedNewsItems({ sortByDesc }) {
-    return this._fetchedNewsItems.getNewsItems({ sortByDesc });
+  constructor({ webhooks, newsCardGenerator, messageGenerator }) {
+    super();
+    this._webhooks = { ...webhooks };
+    this._newsCardGenerator = newsCardGenerator;
+    this._messageGenerator = messageGenerator;
+    this._defaultParams = {
+      method: "post",
+      contentType: "application/json",
+    };
   }
 
   /**
-   * 수신 완료된 뉴스 기사들의 Hash ID값 배열을 반환합니다.
-   * @returns {string[]} 수신 완료된 뉴스 기사들의 Hash ID 배열
+   * 여러 채널로 뉴스를 전송하고, 전송 완료된 뉴스 항목을 저장합니다.
+   * @param {NewsItem[]} newsItems - 전송할 뉴스 아이템 배열
    */
-  get fetchedNewsHashIds() {
-    return this._fetchedNewsItems.newsHashIds;
+  sendNewsItems(newsItems) {
+    newsItems.forEach((newsItem) => {
+      this._sendNewsItemToChannels(newsItem);
+      this._newsItems.addNewsItem(newsItem);
+    });
   }
 
   /**
-   * 수신 완료된 가장 최신 뉴스의 pubDate를 반환합니다.
-   * @returns {Date|null} 가장 최신 뉴스의 pubDate 혹은 null
+   * 여러 채널로 개별 뉴스 아이템을 전송합니다.
+   * @param {NewsItem} newsItem - 전송할 뉴스 아이템
+   * @private
    */
-  get fetchedLatestNewsPubDate() {
-    return this._fetchedNewsItems.latestNewsPubDate;
+  _sendNewsItemToChannels(newsItem) {
+    Object.entries(this._webhooks).forEach(([channel, webhookUrl]) => {
+      const payload = this._newsCardGenerator[toCamelCase(channel)](newsItem.data);
+      this._sendToChannel({ channel, webhookUrl, payload });
+    });
   }
 
   /**
-   * 수신 완료된 뉴스들의 수량을 반환합니다.
-   * @returns {Date|null} 수신 완료된 뉴스 기사들의 수량
+   * 여러 채널로 메시지를 전송합니다.
+   * @param {string} message - 전송할 메시지
    */
-  get fetchedNewsItemsSize() {
-    return this._fetchedNewsItems.size;
+  sendMessage(message) {
+    Object.entries(this._webhooks).forEach(([channel, webhookUrl]) => {
+      const payload = this._messageGenerator[toCamelCase(channel)](message);
+      this._sendToChannel({ channel, webhookUrl, payload });
+    });
+  }
+
+  /**
+   * 특정 채널로 페이로드를 전송합니다.
+   * @param {Object} params - 매개변수 객체
+   * @param {string} params.channel - 채널 이름
+   * @param {string} params.webhookUrl - 웹훅 URL
+   * @param {Object} params.payload - 전송할 페이로드
+   * @private
+   */
+  _sendToChannel({ channel, webhookUrl, payload }) {
+    const params = {
+      ...this._defaultParams,
+      payload: JSON.stringify(payload),
+    };
+
+    if (channel === "JANDI") {
+      params.header = {
+        Accept: "application/vnd.tosslab.jandi-v2+json",
+      };
+    }
+
+    const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
+    if (fetchResponse.getResponseCode() !== 200) {
+      throw new Error(fetchResponse.getContentText());
+    }
+  }
+}
+
+/**
+ * 뉴스 아이템을 구글 시트에 저장하는 서비스 클래스입니다.
+ */
+class ArchivingService extends BaseNewsService {
+  /**
+   * ArchivingService 클래스의 생성자입니다.
+   * @param {Object} params - 생성자 매개변수
+   * @param {Object} params.config - 구글 시트 설정 정보
+   * @param {string} params.config.ID - 스프레드시트 ID
+   * @param {string} params.config.NAME - 워크시트 이름
+   */
+  constructor({ config }) {
+    super();
+    this._config = { ...config };
+    this._spreadSheet = this._getSpreadSheet(this._config.ID);
+    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME);
+    this._workSheetTargetCell = `${this._config.NAME}!A2`;
+  }
+
+  /**
+   * 스프레드시트 객체를 가져옵니다.
+   * @param {string} spreadSheetId - 스프레드시트 ID
+   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} 스프레드시트 객체
+   * @private
+   */
+  _getSpreadSheet(spreadSheetId) {
+    try {
+      return SpreadsheetApp.openById(spreadSheetId);
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  /**
+   * 워크시트를 가져오거나 새로 생성합니다.
+   * @param {string} workSheetName - 워크시트 이름
+   * @returns {GoogleAppsScript.Spreadsheet.Sheet} 워크시트 객체
+   * @private
+   */
+  _getOrCreateWorkSheet(workSheetName) {
+    const existingSheet = this._spreadSheet.getSheetByName(workSheetName);
+    if (existingSheet) {
+      return existingSheet;
+    }
+    return this._createNewWorkSheet(workSheetName);
+  }
+
+  /**
+   * 새 워크시트를 생성합니다.
+   * @param {string} workSheetName - 생성할 워크시트 이름
+   * @returns {GoogleAppsScript.Spreadsheet.Sheet} 새로 생성된 워크시트 객체
+   * @private
+   */
+  _createNewWorkSheet(workSheetName) {
+    try {
+      const newWorkSheet = this._spreadSheet.insertSheet(workSheetName, 1);
+
+      const headerRange = Sheets.newValueRange();
+      headerRange.values = [["날짜/시각", "제목", "매체명", "URL", "내용", "검색어"]];
+      const headerTargetCell = `${workSheetName}!A1`;
+
+      Sheets.Spreadsheets.Values.update(headerRange, this._spreadSheet.getId(), headerTargetCell, {
+        valueInputOption: "RAW",
+      });
+
+      return newWorkSheet;
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  /**
+   * 뉴스 아이템들을 구글 시트에 저장합니다.
+   * @param {NewsItem[]} newsItems - 저장할 뉴스 아이템들 데이터
+   */
+  archiveNewsItems(newsItems) {
+    try {
+      this._workSheet.insertRowsBefore(2, newsItems.length);
+      const valueRange = Sheets.newValueRange();
+      valueRange.values = newsItems.map((newsItem) => newsItem.archivingData);
+
+      Sheets.Spreadsheets.Values.update(
+        valueRange,
+        this._spreadSheet.getId(),
+        this._workSheetTargetCell,
+        {
+          valueInputOption: "USER_ENTERED",
+        },
+      );
+
+      this._newsItems.addNewsItems(newsItems);
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 }
 
@@ -280,253 +479,5 @@ class NewsSourceFinder {
     }
 
     return subpathIndex;
-  }
-}
-
-/**
- * 다양한 채널로 메시지와 뉴스 아이템을 전송하는 서비스 클래스입니다.
- */
-class MessagingService {
-  /**
-   * MessagingService 클래스의 생성자입니다.
-   * @param {Object} params - 설정 객체
-   * @param {Object.<string, string>} params.webhooks - 채널별 웹훅 URL 객체
-   * @param {Object} params.newsCardGenerator - 뉴스 카드 생성기 객체
-   * @param {Object} params.messageGenerator - 메시지 생성기 객체
-   */
-  constructor({ webhooks, newsCardGenerator, messageGenerator }) {
-    this._webhooks = { ...webhooks };
-    this._newsCardGenerator = newsCardGenerator;
-    this._messageGenerator = messageGenerator;
-    this._defaultParams = {
-      method: "post",
-      contentType: "application/json",
-    };
-    this._deliveredNewsItems = new NewsItemMap();
-  }
-
-  /**
-   * 여러 채널로 뉴스를 전송하고, 전송 완료된 뉴스 항목을 저장합니다.
-   * @param {NewsItem[]} newsItems - 전송할 뉴스 아이템 배열
-   */
-  sendNewsItems(newsItems) {
-    newsItems.forEach((newsItem) => {
-      this._sendNewsItemToChannels(newsItem);
-      this._deliveredNewsItems.addNewsItem(newsItem);
-    });
-  }
-
-  /**
-   * 여러 채널로 개별 뉴스 아이템을 전송합니다.
-   * @param {NewsItem} newsItem - 전송할 뉴스 아이템
-   * @private
-   */
-  _sendNewsItemToChannels(newsItem) {
-    Object.entries(this._webhooks).forEach(([channel, webhookUrl]) => {
-      const payload = this._newsCardGenerator[toCamelCase(channel)](newsItem.data);
-      this._sendToChannel({ channel, webhookUrl, payload });
-    });
-  }
-
-  /**
-   * 여러 채널로 메시지를 전송합니다.
-   * @param {string} message - 전송할 메시지
-   */
-  sendMessage(message) {
-    Object.entries(this._webhooks).forEach(([channel, webhookUrl]) => {
-      const payload = this._messageGenerator[toCamelCase(channel)](message);
-      this._sendToChannel({ channel, webhookUrl, payload });
-    });
-  }
-
-  /**
-   * 특정 채널로 페이로드를 전송합니다.
-   * @param {Object} params - 매개변수 객체
-   * @param {string} params.channel - 채널 이름
-   * @param {string} params.webhookUrl - 웹훅 URL
-   * @param {Object} params.payload - 전송할 페이로드
-   * @private
-   */
-  _sendToChannel({ channel, webhookUrl, payload }) {
-    const params = {
-      ...this._defaultParams,
-      payload: JSON.stringify(payload),
-    };
-
-    if (channel === "JANDI") {
-      params.header = {
-        Accept: "application/vnd.tosslab.jandi-v2+json",
-      };
-    }
-
-    const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
-    if (fetchResponse.getResponseCode() !== 200) {
-      throw new Error(fetchResponse.getContentText());
-    }
-  }
-
-  /**
-   * 전송 완료된 뉴스 기사들에 대한 정보를 반환합니다.
-   * @param {Object} params - 전송 완료된 뉴스 기사들의 정보 조회 옵션
-   * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
-   * @returns {NewsItem[]} 전송 완료된 뉴스 기사들
-   */
-  getDeliveredNewsItems({ sortByDesc }) {
-    return this._deliveredNewsItems.getNewsItems({ sortByDesc });
-  }
-
-  /**
-   * 전송 완료된 뉴스 기사들의 Hash ID값 배열을 반환합니다.
-   * @returns {string[]} 전송 완료된 뉴스 기사들의 Hash ID 배열
-   */
-  get deliveredNewsHashIds() {
-    return this._deliveredNewsItems.newsHashIds;
-  }
-
-  /**
-   * 전송 완료된 가장 최신 뉴스의 pubDate를 반환합니다.
-   * @returns {Date|null} 가장 최신 뉴스의 pubDate 혹은 null
-   */
-  get deliveredLatestNewsPubDate() {
-    return this._deliveredNewsItems.latestNewsPubDate;
-  }
-
-  /**
-   * 전송 완료된 뉴스들의 수량을 반환합니다.
-   * @returns {Date|null} 전송 완료된 뉴스 기사들의 수량
-   */
-  get deliveredNewsItemsSize() {
-    return this._deliveredNewsItems.size;
-  }
-}
-
-/**
- * 뉴스 아이템을 구글 시트에 저장하는 서비스 클래스입니다.
- */
-class ArchivingService {
-  /**
-   * ArchivingService 클래스의 생성자입니다.
-   * @param {Object} params - 생성자 매개변수
-   * @param {Object} params.config - 구글 시트 설정 정보
-   * @param {string} params.config.ID - 스프레드시트 ID
-   * @param {string} params.config.NAME - 워크시트 이름
-   */
-  constructor({ config }) {
-    this._config = { ...config };
-    this._spreadSheet = this._getSpreadSheet(this._config.ID);
-    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME);
-    this._workSheetTargetCell = `${this._config.NAME}!A2`;
-    this._archivedNewsItems = new NewsItemMap();
-  }
-
-  /**
-   * 스프레드시트 객체를 가져옵니다.
-   * @param {string} spreadSheetId - 스프레드시트 ID
-   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} 스프레드시트 객체
-   * @private
-   */
-  _getSpreadSheet(spreadSheetId) {
-    try {
-      return SpreadsheetApp.openById(spreadSheetId);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
-
-  /**
-   * 워크시트를 가져오거나 새로 생성합니다.
-   * @param {string} workSheetName - 워크시트 이름
-   * @returns {GoogleAppsScript.Spreadsheet.Sheet} 워크시트 객체
-   * @private
-   */
-  _getOrCreateWorkSheet(workSheetName) {
-    const existingSheet = this._spreadSheet.getSheetByName(workSheetName);
-    if (existingSheet) {
-      return existingSheet;
-    }
-    return this._createNewWorkSheet(workSheetName);
-  }
-
-  /**
-   * 새 워크시트를 생성합니다.
-   * @param {string} workSheetName - 생성할 워크시트 이름
-   * @returns {GoogleAppsScript.Spreadsheet.Sheet} 새로 생성된 워크시트 객체
-   * @private
-   */
-  _createNewWorkSheet(workSheetName) {
-    try {
-      const newWorkSheet = this._spreadSheet.insertSheet(workSheetName, 1);
-
-      const headerRange = Sheets.newValueRange();
-      headerRange.values = [["날짜/시각", "제목", "매체명", "URL", "내용", "검색어"]];
-      const headerTargetCell = `${workSheetName}!A1`;
-
-      Sheets.Spreadsheets.Values.update(headerRange, this._spreadSheet.getId(), headerTargetCell, {
-        valueInputOption: "RAW",
-      });
-
-      return newWorkSheet;
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
-
-  /**
-   * 뉴스 아이템들을 구글 시트에 저장합니다.
-   * @param {NewsItem[]} newsItems - 저장할 뉴스 아이템들 데이터
-   */
-  archiveNewsItems(newsItems) {
-    try {
-      this._workSheet.insertRowsBefore(2, newsItems.length);
-      const valueRange = Sheets.newValueRange();
-      valueRange.values = newsItems.map((newsItem) => newsItem.archivingData);
-
-      Sheets.Spreadsheets.Values.update(
-        valueRange,
-        this._spreadSheet.getId(),
-        this._workSheetTargetCell,
-        {
-          valueInputOption: "USER_ENTERED",
-        },
-      );
-
-      this._archivedNewsItems.addNewsItems(newsItems);
-    } catch (error) {
-      throw new Error(error.message);
-    }
-  }
-
-  /**
-   * 저장 완료된 뉴스 기사들에 대한 정보를 반환합니다.
-   * @param {Object} params - 저장 완료된 뉴스 기사들의 정보 조회 옵션
-   * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
-   * @returns {NewsItem[]} 저장 완료된 뉴스 기사들
-   */
-  getArchivedNewsItems({ sortByDesc }) {
-    return this._archivedNewsItems.getNewsItems({ sortByDesc });
-  }
-
-  /**
-   * 저장 완료된 뉴스 기사들의 Hash ID값 배열을 반환합니다.
-   * @returns {string[]} 저장 완료된 뉴스 기사들의 Hash ID 배열
-   */
-  get archivedNewsHashIds() {
-    return this._archivedNewsItems.newsHashIds;
-  }
-
-  /**
-   * 저장 완료된 가장 최신 뉴스의 pubDate를 반환합니다.
-   * @returns {Date|null} 가장 최신 뉴스의 pubDate 혹은 null
-   */
-  get archivedLatestNewsPubDate() {
-    return this._archivedNewsItems.latestNewsPubDate;
-  }
-
-  /**
-   * 저장 완료된 뉴스들의 수량을 반환합니다.
-   * @returns {Date|null} 저장 완료된 뉴스 기사들의 수량
-   */
-  get archivedNewsItemsSize() {
-    return this._archivedNewsItems.size;
   }
 }
