@@ -91,6 +91,8 @@ class NewsFetchingBotController {
       }
 
       this._saveInitialProperties();
+      this._deleteAllTriggers();
+      this._initializeTriggerWithInterval();
       this._sendWelcomeMessage();
     } catch (error) {
       throw new InitializationError(error.message);
@@ -336,6 +338,34 @@ class NewsFetchingBotController {
     }
 
     Logger.log("[INFO] 모든 키워드에 대해 검색된 뉴스가 없습니다. 로깅 작업을 종료합니다.");
+  }
+
+  /**
+   * GAS 프로젝트에 남아있는 기존 트리거를 제거하고, 뉴스봇 스크립트의 자동 실행 트리거를 설정합니다.
+   * @param {number} [intervalMinutes] - 분 단위 실행 간격 (1, 5, 10, 15, 30 중 택일)
+   * @throws {InitializationError} 트리거 설정 중 오류 발생 시
+   */
+  _initializeTriggerWithInterval(intervalMinutes = 5) {
+    try {
+      ScriptApp.newTrigger("runNewsFetchingBot").timeBased().everyMinutes(intervalMinutes).create();
+    } catch (error) {
+      throw new InitializationError(error.message);
+    }
+  }
+
+  /**
+   * GAS 프로젝트에 남아있는 기존 트리거들을 모두 제거합니다.
+   * @throws {InitializationError} 트리거 제거 중 오류 발생 시
+   */
+  _deleteAllTriggers() {
+    try {
+      const existingTriggers = ScriptApp.getProjectTriggers();
+      if (existingTriggers.length > 0) {
+        existingTriggers.forEach((trigger) => ScriptApp.deleteTrigger(trigger));
+      }
+    } catch (error) {
+      throw new InitializationError(error.message);
+    }
   }
 
   /**
