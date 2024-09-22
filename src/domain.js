@@ -29,7 +29,7 @@ class NewsItem {
    * @param {number} hashIdLength - 생성할 해시 ID값의 길이
    * @returns {string} 생성된 해시 ID값
    */
-  _createHashId({ newsItemUrl, hashIdLength = 10 }) {
+  _createHashId({ newsItemUrl, hashIdLength = 8 }) {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     // 해싱 연산용 소수 및 모듈러 설정
