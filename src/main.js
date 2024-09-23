@@ -11,11 +11,20 @@
  * - 문의사항 : mail@seongjin.me
  * ***********************************************************************************************/
 
+import CONFIG from "./user/config";
+import NewsFetchingBotController from "./controller/controller";
+import {
+  PropertyError,
+  ConfigValidationError,
+  NewsFetchError,
+  InitializationError,
+} from "./util/error";
+
 /**
  * 네이버 뉴스봇의 메인 실행 함수입니다.
  * Google Apps Script 환경에서 실행 트리거를 설정하실 때 이 함수를 실행 대상으로 설정해 주세요.
  */
-function runNewsFetchingBot() {
+export default function runNewsFetchingBot() {
   try {
     const controller = new NewsFetchingBotController();
 

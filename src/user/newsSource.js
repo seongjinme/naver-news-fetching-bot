@@ -7,7 +7,7 @@
  * - 마지막 업데이트 : 2022년 8월 24일
  * ***********************************************************************************************/
 
-const NEWS_SOURCE = Object.freeze({
+export const NEWS_SOURCE = Object.freeze({
   "4th.kr": "포쓰저널",
   "100ssd.co.kr": "백세시대",
   "ablenews.co.kr": "에이블뉴스",
@@ -745,3 +745,5 @@ const NEWS_SOURCE = Object.freeze({
   "ziksir.com": "직썰",
   "zine.istyle24.com": "스냅",
 });
+
+export default NEWS_SOURCE;

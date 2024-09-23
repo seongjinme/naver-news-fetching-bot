@@ -1,7 +1,7 @@
 /**
  * NewsItem은 개별 뉴스 기사의 정보를 다루고 관리합니다.
  */
-class NewsItem {
+export class NewsItem {
   /**
    * NewsItem 클래스의 생성자입니다.
    * @param {Object} newsData - 뉴스 기사 정보
@@ -116,7 +116,7 @@ class NewsItem {
 /**
  * NewsItem 항목들을 관리하는 맵 클래스입니다.
  */
-class NewsItemMap {
+export class NewsItemMap {
   /**
    * NewsItemMap 클래스의 생성자입니다.
    */

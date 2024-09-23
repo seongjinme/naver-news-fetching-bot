@@ -1,8 +1,11 @@
+import { NewsItem, NewsItemMap } from "../domain/domain";
+import { getBleachedText, toCamelCase, objectToQueryParams } from "../util/util";
+
 /**
  * BaseNewsService는 뉴스 관련 서비스들의 기본 클래스로, 뉴스 데이터 관리를 위한 공통 기능을 제공합니다.
  * FetchingService, MessagingService, ArchivingService가 이 클래스를 상속받아 사용합니다.
  */
-class BaseNewsService {
+export class BaseNewsService {
   /**
    * BaseNewsService의 생성자입니다.
    * NewsItemMap 인스턴스를 초기화합니다.
@@ -54,7 +57,7 @@ class BaseNewsService {
 /**
  * FetchingService는 네이버 오픈 API를 통해 검색어가 포함된 뉴스 기사를 가져와 처리합니다.
  */
-class FetchingService extends BaseNewsService {
+export class FetchingService extends BaseNewsService {
   /**
    * FetchingService 클래스의 생성자입니다.
    * @param {Object} params - 생성자 매개변수
@@ -198,7 +201,7 @@ class FetchingService extends BaseNewsService {
 /**
  * 다양한 채널로 메시지와 뉴스 아이템을 전송하는 서비스 클래스입니다.
  */
-class MessagingService extends BaseNewsService {
+export class MessagingService extends BaseNewsService {
   /**
    * MessagingService 클래스의 생성자입니다.
    * @param {Object} params - 설정 객체
@@ -281,7 +284,7 @@ class MessagingService extends BaseNewsService {
 /**
  * 뉴스 아이템을 구글 시트에 저장하는 서비스 클래스입니다.
  */
-class ArchivingService extends BaseNewsService {
+export class ArchivingService extends BaseNewsService {
   /**
    * ArchivingService 클래스의 생성자입니다.
    * @param {Object} params - 생성자 매개변수
@@ -378,7 +381,7 @@ class ArchivingService extends BaseNewsService {
 /**
  * NewsSourceFinder 클래스는 뉴스 매체명을 관리하고 탐색하는 기능을 제공합니다.
  */
-class NewsSourceFinder {
+export class NewsSourceFinder {
   /**
    * NewsSources 객체를 생성합니다.
    * @param {Object} newsSource - 뉴스 소스 목록

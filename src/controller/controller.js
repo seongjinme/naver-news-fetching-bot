@@ -1,7 +1,16 @@
+import { NewsItem } from "../domain/domain";
+import { FetchingService, MessagingService, ArchivingService } from "../service/service";
+import { PropertyManager, isTwoArraysEqual, validateConfig } from "../util/util";
+import { NewsFetchError, InitializationError } from "../util/error";
+
+import { NewsCardGenerator, MessageGenerator } from "../user/template";
+import CONFIG from "../user/config";
+import NEWS_SOURCE from "../user/newsSource";
+
 /**
  * 뉴스봇 컨트롤러 클래스입니다.
  */
-class NewsFetchingBotController {
+export default class NewsFetchingBotController {
   /**
    * NewsFetchingBotController의 생성자입니다.
    */

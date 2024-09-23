@@ -12,7 +12,7 @@
  * @property {function(Object): Object} jandi - JANDI용 뉴스 카드 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 뉴스 카드 객체 생성 함수
  */
-const NewsCardGenerator = {
+export const NewsCardGenerator = {
   /**
    * 슬랙용 뉴스 카드를 생성합니다.
    * @param {Object} params - 뉴스 항목 정보
@@ -160,7 +160,7 @@ const NewsCardGenerator = {
  * @property {function(Object): Object} jandi - JANDI용 메시지 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 메시지 객체 생성 함수
  */
-const MessageGenerator = {
+export const MessageGenerator = {
   /**
    * 슬랙용 일반 메시지를 생성합니다.
    * @param {string} message - 전송할 메시지 내용
@@ -216,7 +216,7 @@ const MessageGenerator = {
  * @param {string[]} searchKeywords - 설정된 검색 키워드들
  * @returns {string} 초기 설정 완료 안내 메시지
  */
-function createWelcomeMessage(searchKeywords) {
+export function createWelcomeMessage(searchKeywords) {
   return `"[네이버 뉴스 봇 설치 완료]\n\n앞으로 '${searchKeywords.join(", ")}' 키워드에 대한 최신 뉴스가 주기적으로 전송됩니다.`;
 }
 
@@ -230,6 +230,6 @@ function createWelcomeMessage(searchKeywords) {
  * @param {string[]} after - 변경 후 검색 키워드들
  * @returns {string} 검색 키워드 변경 안내 메시지
  */
-function createKeywordsChangedMessage(before, after) {
+export function createKeywordsChangedMessage(before, after) {
   return `[네이버 뉴스 봇 키워드 변경 완료]\n\n뉴스 검색 키워드가 '${before}'에서 '${after}'로 변경되었습니다.`;
 }

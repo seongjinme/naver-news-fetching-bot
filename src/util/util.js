@@ -1,62 +1,4 @@
-/**
- * 설정값 유효성 검사 중 발생하는 오류를 나타내는 사용자 정의 에러 클래스입니다.
- * @extends Error
- */
-class ConfigValidationError extends Error {
-  /**
-   * ConfigValidationError 생성자
-   * @param {string} message - 오류 메시지
-   */
-  constructor(message) {
-    super(message);
-    this.name = "ConfigValidationError";
-  }
-}
-
-/**
- * GAS 환경에 설정된 Property를 다룰 때 발생하는 오류를 나타내는 사용자 정의 에러 클래스입니다.
- * @extends Error
- */
-class PropertyError extends Error {
-  /**
-   * PropertyError 생성자
-   * @param {string} message - 오류 메시지
-   */
-  constructor(message) {
-    super(message);
-    this.name = "PropertyError";
-  }
-}
-
-/**
- * 뉴스 수신 중 발생한 오류에 대한 사용자 정의 에러 클래스입니다.
- * @extends Error
- */
-class NewsFetchError extends Error {
-  /**
-   * NewsFetchError 생성자
-   * @param {string} message - 오류 메시지
-   */
-  constructor(message) {
-    super(message);
-    this.name = "NewsFetchError";
-  }
-}
-
-/**
- * 뉴스봇 초기화 구동 중 발생한 오류에 대한 사용자 정의 에러 클래스입니다.
- * @extends Error
- */
-class InitializationError extends Error {
-  /**
-   * InitializationError 생성자
-   * @param {string} message - 오류 메시지
-   */
-  constructor(message) {
-    super(message);
-    this.name = "InitializationError";
-  }
-}
+import { PropertyError, ConfigValidationError } from "./error";
 
 /**
  * GAS의 PropertiesService를 사용하여 속성값을 관리하는 유틸리티 객체입니다.
@@ -64,7 +6,7 @@ class InitializationError extends Error {
  * @property {function(string): string|null} getProperty - 지정된 하나의 속성값을 가져오는 함수
  * @property {function(string, string): void} setProperty - 지정된 속성값을 설정하고 저장하는 함수
  */
-const PropertyManager = {
+export const PropertyManager = {
   /**
    * PropertiesService 객체에서 지정된 속성값을 가져옵니다.
    * @param {string} property - 가져올 속성의 이름
@@ -102,7 +44,7 @@ const PropertyManager = {
  * @param {string} text - 기사 제목/요약문 텍스트
  * @returns {string} 일부 특수문자가 처리된 기사 제목/요약문 텍스트
  */
-function getBleachedText(text) {
+export function getBleachedText(text) {
   text = text.replace(/(<([^>]+)>)/gi, "");
   text = text.replace(/&quot;/gi, '"');
   text = text.replace(/&#039;/gi, "'");
@@ -120,7 +62,7 @@ function getBleachedText(text) {
  * @param {string} text - UPPER_CASE 텍스트
  * @returns {string} camelCase 형식으로 수정된 텍스트
  */
-function toCamelCase(text) {
+export function toCamelCase(text) {
   return text.toLowerCase().replace(/_(.)/g, (_, c) => c.toUpperCase());
 }
 
@@ -130,7 +72,7 @@ function toCamelCase(text) {
  * @param {string[]} arrayB - B 배열
  * @returns {boolean} 두 배열의 비교 결과값
  */
-function isTwoArraysEqual(arrayA, arrayB) {
+export function isTwoArraysEqual(arrayA, arrayB) {
   if (arrayA === arrayB) return true;
   if (arrayA === null || arrayB === null || arrayA.length !== arrayB.length) return false;
 
@@ -145,7 +87,7 @@ function isTwoArraysEqual(arrayA, arrayB) {
  * @param {Record<string, T>} params - Query에 담을 내용
  * @returns {string} Query string 값
  */
-function objectToQueryParams(params) {
+export function objectToQueryParams(params) {
   return Object.entries(params)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join("&");
@@ -156,7 +98,7 @@ function objectToQueryParams(params) {
  * @param {Object} config - 뉴스봇 구동 설정값 객체
  * @throws {ConfigValidationError} 설정값 검증 실패시 에러 반환
  */
-function validateConfig(config) {
+export function validateConfig(config) {
   if (typeof config !== "object" || config === null) {
     throw new ConfigValidationError("설정값 객체(CONFIG)가 존재하지 않습니다.");
   }
