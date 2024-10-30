@@ -13,12 +13,7 @@
 
 import CONFIG from "./user/config";
 import NewsFetchingBotController from "./controller/controller";
-import {
-  PropertyError,
-  ConfigValidationError,
-  NewsFetchError,
-  InitializationError,
-} from "./util/error";
+import { PropertyError, ConfigValidationError, NewsFetchError, InitializationError } from "./util/error";
 
 /**
  * 네이버 뉴스봇의 메인 실행 함수입니다.
