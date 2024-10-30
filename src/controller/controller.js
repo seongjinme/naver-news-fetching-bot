@@ -3,7 +3,7 @@ import { FetchingService, MessagingService, ArchivingService } from "../service/
 import { PropertyManager, isTwoArraysEqual, validateConfig } from "../util/util";
 import { NewsFetchError, InitializationError } from "../util/error";
 
-import { NewsCardGenerator, MessageGenerator } from "../user/template";
+import { NewsCardGenerator, MessageGenerator } from "../util/template";
 import CONFIG from "../user/config";
 import NEWS_SOURCE from "../user/newsSource";
 
@@ -22,8 +22,7 @@ export default class NewsFetchingBotController {
 
     this._searchKeywords = searchKeywords || [...CONFIG.KEYWORDS];
     this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
-    this._lastDeliveredNewsPubDate =
-      lastDeliveredNewsPubDate || this._createInitialLastDeliveredNewsPubDate();
+    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate || this._createInitialLastDeliveredNewsPubDate();
     this._isFirstRun = isFirstRun;
 
     this._fetchingService = new FetchingService({
@@ -46,8 +45,7 @@ export default class NewsFetchingBotController {
     });
 
     this._isArchivingOnlyMode =
-      Object.values(CONFIG.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
-      CONFIG.ARCHIVING.IS_ENABLED;
+      Object.values(CONFIG.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) && CONFIG.ARCHIVING.IS_ENABLED;
   }
 
   /**
@@ -149,9 +147,7 @@ export default class NewsFetchingBotController {
    */
   sendNewsItems() {
     if (!this._isWebhookConfigured()) {
-      Logger.log(
-        "[INFO] 뉴스를 전송할 채팅 서비스가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.",
-      );
+      Logger.log("[INFO] 뉴스를 전송할 채팅 서비스가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.");
       return;
     }
 
@@ -177,9 +173,7 @@ export default class NewsFetchingBotController {
    */
   archiveNewsItems() {
     if (!CONFIG.ARCHIVING.IS_ENABLED) {
-      Logger.log(
-        "[INFO] 뉴스를 저장할 구글 시트 정보가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.",
-      );
+      Logger.log("[INFO] 뉴스를 저장할 구글 시트 정보가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.");
       return;
     }
 
@@ -270,9 +264,7 @@ export default class NewsFetchingBotController {
 
     return {
       searchKeywords: savedSearchKeywords ? JSON.parse(savedSearchKeywords) : null,
-      lastDeliveredNewsHashIds: savedLastDeliveredNewsHashIds
-        ? JSON.parse(savedLastDeliveredNewsHashIds)
-        : [],
+      lastDeliveredNewsHashIds: savedLastDeliveredNewsHashIds ? JSON.parse(savedLastDeliveredNewsHashIds) : [],
       lastDeliveredNewsPubDate: savedLastDeliveredNewsPubDate
         ? new Date(JSON.parse(savedLastDeliveredNewsPubDate))
         : null,

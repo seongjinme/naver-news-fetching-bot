@@ -157,9 +157,7 @@ export class NewsItemMap {
       return [];
     }
 
-    const compareFunction = sortByDesc
-      ? (a, b) => b.pubDate - a.pubDate
-      : (a, b) => a.pubDate - b.pubDate;
+    const compareFunction = sortByDesc ? (a, b) => b.pubDate - a.pubDate : (a, b) => a.pubDate - b.pubDate;
 
     return [...this._newsItemsMap.values()].sort(compareFunction);
   }

@@ -68,14 +68,7 @@ export class FetchingService extends BaseNewsService {
    * @param {string[]} lastDeliveredNewsHashIds - 마지막으로 전송 완료된 뉴스 항목들의 해시 ID 배열
    * @param {Date} lastDeliveredNewsPubDate - 마지막으로 전송 완료된 뉴스 항목의 게재 시각
    */
-  constructor({
-    apiUrl,
-    clientId,
-    clientSecret,
-    newsSource,
-    lastDeliveredNewsHashIds,
-    lastDeliveredNewsPubDate,
-  }) {
+  constructor({ apiUrl, clientId, clientSecret, newsSource, lastDeliveredNewsHashIds, lastDeliveredNewsPubDate }) {
     super();
     this._apiUrl = apiUrl;
     this._fetchOptions = {
@@ -362,14 +355,9 @@ export class ArchivingService extends BaseNewsService {
       const valueRange = Sheets.newValueRange();
       valueRange.values = newsItems.map((newsItem) => newsItem.archivingData);
 
-      Sheets.Spreadsheets.Values.update(
-        valueRange,
-        this._spreadSheet.getId(),
-        this._workSheetTargetCell,
-        {
-          valueInputOption: "USER_ENTERED",
-        },
-      );
+      Sheets.Spreadsheets.Values.update(valueRange, this._spreadSheet.getId(), this._workSheetTargetCell, {
+        valueInputOption: "USER_ENTERED",
+      });
 
       this._newsItems.addNewsItems(newsItems);
     } catch (error) {
@@ -474,10 +462,7 @@ export class NewsSourceFinder {
   _findSubpathIndex({ address, index }) {
     let subpathIndex = index;
 
-    while (
-      subpathIndex + 1 < this._sources.length &&
-      address.startsWith(this._sources[subpathIndex + 1][0])
-    ) {
+    while (subpathIndex + 1 < this._sources.length && address.startsWith(this._sources[subpathIndex + 1][0])) {
       subpathIndex += 1;
     }
 
