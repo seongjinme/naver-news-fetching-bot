@@ -15,7 +15,8 @@
   },
   "homepage": "https://github.com/seongjinme/naver-news-fetching-bot#readme",
   "scripts": {
-    "push": "clasp -P ./src/ push"
+    "push": "clasp -P ./src/ push",
+    "bundle": "bash ./src/bundle.sh"
   },
   "devDependencies": {
     "@google/clasp": "^2.4.2",
