@@ -27,7 +27,7 @@ sed -i '' 's/^export //g' dist/bundle.js
 for file in dist/config.js dist/newsSource.js; do
   sed -i '' '/^export default/d' "$file"
   sed -i '' 's/^export //g' "$file"
-  sed -i '' '/^$/d' "$file"
+  sed -i '' '${/^$/d;}' "$file"
 done
 
 echo "Bundling complete."
