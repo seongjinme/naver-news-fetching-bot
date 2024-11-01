@@ -127,12 +127,13 @@ export class FetchingService extends BaseNewsService {
    * API에서 데이터를 가져오고 파싱합니다.
    * @param {string} fetchUrl - API 요청 URL
    * @returns {Object[]} 파싱된 JSON 응답 데이터
-   * @throws {Error} API 요청이 실패하거나 응답 코드가 200이 아닐 경우
+   * @throws {Error} API 요청이 실패하거나 응답 코드가 200번대가 아닐 경우
    * @private
    */
   _fetchNewsItemsFromAPI(fetchUrl) {
     const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
-    if (fetchedData.getResponseCode() !== 200) {
+    const fetchedDataResponseCode = fetchedData.getResponseCode();
+    if (fetchedDataResponseCode < 200 || fetchedDataResponseCode > 299) {
       throw new Error(fetchedData.getContentText());
     }
 
@@ -268,7 +269,8 @@ export class MessagingService extends BaseNewsService {
     }
 
     const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
-    if (fetchResponse.getResponseCode() !== 200) {
+    const fetchResponseCode = fetchResponse.getResponseCode();
+    if (fetchResponseCode < 200 || fetchResponseCode > 299) {
       throw new Error(fetchResponse.getContentText());
     }
   }
