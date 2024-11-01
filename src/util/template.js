@@ -11,6 +11,7 @@
  * @property {function(Object): Object} slack - Slack용 뉴스 카드 객체 생성 함수
  * @property {function(Object): Object} jandi - JANDI용 뉴스 카드 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 뉴스 카드 객체 생성 함수
+ * @property {function(Object): Object} discord - Discord용 뉴스 카드 객체 생성 함수
  */
 export const NewsCardGenerator = {
   /**
@@ -100,11 +101,12 @@ export const NewsCardGenerator = {
   /**
    * 구글챗용 뉴스 카드를 생성합니다.
    * @param {Object} params - 뉴스 항목 정보
-   * @param {string} params.pubDateText - 발행일 텍스트
    * @param {string} params.title - 뉴스 제목
+   * @param {string} params.link - 뉴스 링크 URL
    * @param {string} params.source - 뉴스 출처
    * @param {string} params.description - 뉴스 설명
-   * @param {string} params.link - 뉴스 링크 URL
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {string[]} params.keywords - 뉴스에 해당하는 검색어 목록
    * @returns {Object} 구글챗 메시지 카드 객체
    */
   googleChat: ({ title, link, source, description, pubDateText, keywords }) => {
@@ -151,6 +153,46 @@ export const NewsCardGenerator = {
       ],
     };
   },
+
+  /**
+   * 디스코드용 뉴스 카드를 생성합니다.
+   * @param {Object} params - 뉴스 항목 정보
+   * @param {string} params.title - 뉴스 제목
+   * @param {string} params.link - 뉴스 링크 URL
+   * @param {string} params.source - 뉴스 출처
+   * @param {string} params.description - 뉴스 설명
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {string[]} params.keywords - 뉴스에 해당하는 검색어 목록
+   * @returns {Object} 디스코드 메시지 카드 객체
+   */
+  discord: ({ title, link, source, description, pubDateText, keywords }) => {
+    return {
+      username: "네이버 뉴스봇",
+      embeds: [
+        {
+          author: {
+            name: source,
+          },
+          title,
+          url: link,
+          description,
+          color: 15258703,
+          fields: [
+            {
+              name: "게재시각",
+              value: pubDateText,
+              inline: true,
+            },
+            {
+              name: "검색어",
+              value: keywords.join(", "),
+              inline: true,
+            },
+          ],
+        },
+      ],
+    };
+  },
 };
 
 /**
@@ -159,6 +201,7 @@ export const NewsCardGenerator = {
  * @property {function(Object): Object} slack - Slack용 메시지 객체 생성 함수
  * @property {function(Object): Object} jandi - JANDI용 메시지 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 메시지 객체 생성 함수
+ * @property {function(Object): Object} discord - Discord용 뉴스 카드 객체 생성 함수
  */
 export const MessageGenerator = {
   /**
@@ -203,6 +246,18 @@ export const MessageGenerator = {
   googleChat: (message) => {
     return {
       text: message,
+    };
+  },
+
+  /**
+   * 디스코드용 일반 메시지를 생성합니다.
+   * @param {string} message - 전송할 메시지 내용
+   * @returns {Object} 디스코드 메시지 객체
+   */
+  discord: (message) => {
+    return {
+      username: "네이버 뉴스봇",
+      content: message,
     };
   },
 };
