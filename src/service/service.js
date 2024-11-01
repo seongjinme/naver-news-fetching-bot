@@ -219,9 +219,12 @@ export class MessagingService extends BaseNewsService {
    * @param {NewsItem[]} newsItems - 전송할 뉴스 아이템 배열
    */
   sendNewsItems(newsItems) {
-    newsItems.forEach((newsItem) => {
+    newsItems.forEach(async (newsItem) => {
       this._sendNewsItemToChannels(newsItem);
       this._newsItems.addNewsItem(newsItem);
+
+      // 채팅 솔루션별 초당/분당 request 횟수 제한을 고려하여 다음 항목 처리 전에 일시 중지 시간을 부여합니다.
+      await sleep(50);
     });
   }
 

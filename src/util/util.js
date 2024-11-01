@@ -16,9 +16,7 @@ export const PropertyManager = {
     try {
       return PropertiesService.getScriptProperties().getProperty(property);
     } catch (error) {
-      throw new PropertyError(
-        `'${property}' 속성값을 불러오지 못했습니다.\n에러 원문 메시지 : ${error.message}`,
-      );
+      throw new PropertyError(`'${property}' 속성값을 불러오지 못했습니다.\n에러 원문 메시지 : ${error.message}`);
     }
   },
 
@@ -32,9 +30,7 @@ export const PropertyManager = {
     try {
       PropertiesService.getScriptProperties().setProperty(property, value);
     } catch (error) {
-      throw new PropertyError(
-        `'${property}' 속성값을 저장하지 못했습니다.\n에러 원문 메시지 : ${error.message}`,
-      );
+      throw new PropertyError(`'${property}' 속성값을 저장하지 못했습니다.\n에러 원문 메시지 : ${error.message}`);
     }
   },
 };
@@ -94,6 +90,15 @@ export function objectToQueryParams(params) {
 }
 
 /**
+ * 지정된 시간 동안 코드 실행을 일시 중지합니다.
+ * @param {number} ms - 일시 중지할 시간 (밀리초 단위)
+ * @returns {Promise<void>} 지정된 시간이 경과한 후 resolve되는 Promise
+ */
+export function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * 뉴스봇 구동 설정값을 검증합니다.
  * @param {Object} config - 뉴스봇 구동 설정값 객체
  * @throws {ConfigValidationError} 설정값 검증 실패시 에러 반환
@@ -108,14 +113,10 @@ export function validateConfig(config) {
   }
 
   if (!Array.isArray(config.KEYWORDS) || config.KEYWORDS.length === 0) {
-    throw new ConfigValidationError(
-      "검색어 목록(KEYWORDS)에는 최소 하나 이상의 검색어를 포함해야 합니다.",
-    );
+    throw new ConfigValidationError("검색어 목록(KEYWORDS)에는 최소 하나 이상의 검색어를 포함해야 합니다.");
   }
   if (config.KEYWORDS.length > 5) {
-    throw new ConfigValidationError(
-      "검색어 목록(KEYWORDS)에 포함된 검색어는 최대 5개까지만 허용됩니다.",
-    );
+    throw new ConfigValidationError("검색어 목록(KEYWORDS)에 포함된 검색어는 최대 5개까지만 허용됩니다.");
   }
   config.KEYWORDS.forEach((keyword, index) => {
     if (typeof keyword !== "string" || keyword.trim() === "") {
@@ -131,29 +132,18 @@ export function validateConfig(config) {
     );
   }
   if (typeof config.NAVER_API_CLIENT.ID !== "string" || config.NAVER_API_CLIENT.ID.trim() === "") {
-    throw new ConfigValidationError(
-      "네이버 검색 오픈 API의 Client ID(NAVER_API_CLIENT.ID)값이 비어 있습니다.",
-    );
+    throw new ConfigValidationError("네이버 검색 오픈 API의 Client ID(NAVER_API_CLIENT.ID)값이 비어 있습니다.");
   }
-  if (
-    typeof config.NAVER_API_CLIENT.SECRET !== "string" ||
-    config.NAVER_API_CLIENT.SECRET.trim() === ""
-  ) {
-    throw new ConfigValidationError(
-      "네이버 검색 오픈 API의 Secret(NAVER_API_CLIENT.SECRET)값이 비어 있습니다.",
-    );
+  if (typeof config.NAVER_API_CLIENT.SECRET !== "string" || config.NAVER_API_CLIENT.SECRET.trim() === "") {
+    throw new ConfigValidationError("네이버 검색 오픈 API의 Secret(NAVER_API_CLIENT.SECRET)값이 비어 있습니다.");
   }
 
   if (typeof config.WEBHOOK !== "object" || config.WEBHOOK === null) {
-    throw new ConfigValidationError(
-      "웹훅 주소 설정값(WEBHOOK)은 반드시 객체 형태로 작성되어야 합니다.",
-    );
+    throw new ConfigValidationError("웹훅 주소 설정값(WEBHOOK)은 반드시 객체 형태로 작성되어야 합니다.");
   }
   Object.keys(config.WEBHOOK).forEach((service) => {
     if (typeof config.WEBHOOK[service] !== "object" || config.WEBHOOK[service] === null) {
-      throw new ConfigValidationError(
-        `웹훅 주소 설정값(WEBHOOK) 안의 "${service}" 설정값은 객체 형태여야 합니다.`,
-      );
+      throw new ConfigValidationError(`웹훅 주소 설정값(WEBHOOK) 안의 "${service}" 설정값은 객체 형태여야 합니다.`);
     }
     if (typeof config.WEBHOOK[service].IS_ENABLED !== "boolean") {
       throw new ConfigValidationError(
@@ -168,14 +158,10 @@ export function validateConfig(config) {
   });
 
   if (typeof config.ARCHIVING !== "object" || config.ARCHIVING === null) {
-    throw new ConfigValidationError(
-      "뉴스 저장 설정값(ARCHIVING)은 반드시 객체 형태로 작성되어야 합니다.",
-    );
+    throw new ConfigValidationError("뉴스 저장 설정값(ARCHIVING)은 반드시 객체 형태로 작성되어야 합니다.");
   }
   if (typeof config.ARCHIVING.IS_ENABLED !== "boolean") {
-    throw new ConfigValidationError(
-      "뉴스 저장 여부 설정값(ARCHIVING.IS_ENABLED)은 true 혹은 false여야 합니다.",
-    );
+    throw new ConfigValidationError("뉴스 저장 여부 설정값(ARCHIVING.IS_ENABLED)은 true 혹은 false여야 합니다.");
   }
   if (typeof config.ARCHIVING.SHEET_INFO !== "object" || config.ARCHIVING.SHEET_INFO === null) {
     throw new ConfigValidationError(
@@ -190,10 +176,7 @@ export function validateConfig(config) {
     }
   });
 
-  if (
-    Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
-    !config.ARCHIVING.IS_ENABLED
-  ) {
+  if (Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) && !config.ARCHIVING.IS_ENABLED) {
     throw new ConfigValidationError(
       "뉴스 항목을 전송할 웹훅 사용 여부(CONFIG.WEBHOOK.*.IS_ENABLED)와 뉴스 항목 저장 여부(CONFIG.ARCHIVING.IS_ENABLED) 가운데 최소 1가지 이상은 true여야 합니다.",
     );
