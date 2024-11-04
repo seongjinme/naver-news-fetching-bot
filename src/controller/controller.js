@@ -351,7 +351,7 @@ export default class NewsFetchingBotController {
    * @param {number} [intervalMinutes] - 분 단위 실행 간격 (1, 5, 10, 15, 30 중 택일)
    * @throws {InitializationError} 트리거 설정 중 오류 발생 시
    */
-  _initializeTriggerWithInterval(intervalMinutes = 5) {
+  _initializeTriggerWithInterval(intervalMinutes = 1) {
     try {
       ScriptApp.newTrigger("runNewsFetchingBot").timeBased().everyMinutes(intervalMinutes).create();
     } catch (error) {
