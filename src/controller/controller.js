@@ -208,9 +208,14 @@ export default class NewsFetchingBotController {
       ? this._archivingService.latestNewsPubDate
       : this._messagingService.latestNewsPubDate;
 
+    const lastDeliveredNewsHashIds =
+      newHashIds.length > 0 && newPubDate && newPubDate > this._lastDeliveredNewsPubDate
+        ? newHashIds
+        : [...this._lastDeliveredNewsHashIds, ...newHashIds];
+
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
-      lastDeliveredNewsHashIds: newHashIds.length > 0 ? newHashIds : this._lastDeliveredNewsHashIds,
+      lastDeliveredNewsHashIds,
       lastDeliveredNewsPubDate: newPubDate ?? this._lastDeliveredNewsPubDate,
     });
   }
