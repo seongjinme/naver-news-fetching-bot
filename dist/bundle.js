@@ -270,9 +270,14 @@ class NewsFetchingBotController {
       ? this._archivingService.latestNewsPubDate
       : this._messagingService.latestNewsPubDate;
 
+    const lastDeliveredNewsHashIds =
+      newHashIds.length > 0 && newPubDate && newPubDate > this._lastDeliveredNewsPubDate
+        ? newHashIds
+        : [...this._lastDeliveredNewsHashIds, ...newHashIds];
+
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
-      lastDeliveredNewsHashIds: newHashIds.length > 0 ? newHashIds : this._lastDeliveredNewsHashIds,
+      lastDeliveredNewsHashIds,
       lastDeliveredNewsPubDate: newPubDate ?? this._lastDeliveredNewsPubDate,
     });
   }
@@ -408,7 +413,7 @@ class NewsFetchingBotController {
    * @param {number} [intervalMinutes] - 분 단위 실행 간격 (1, 5, 10, 15, 30 중 택일)
    * @throws {InitializationError} 트리거 설정 중 오류 발생 시
    */
-  _initializeTriggerWithInterval(intervalMinutes = 5) {
+  _initializeTriggerWithInterval(intervalMinutes = 1) {
     try {
       ScriptApp.newTrigger("runNewsFetchingBot").timeBased().everyMinutes(intervalMinutes).create();
     } catch (error) {
@@ -771,12 +776,13 @@ class FetchingService extends BaseNewsService {
    * API에서 데이터를 가져오고 파싱합니다.
    * @param {string} fetchUrl - API 요청 URL
    * @returns {Object[]} 파싱된 JSON 응답 데이터
-   * @throws {Error} API 요청이 실패하거나 응답 코드가 200이 아닐 경우
+   * @throws {Error} API 요청이 실패하거나 응답 코드가 200번대가 아닐 경우
    * @private
    */
   _fetchNewsItemsFromAPI(fetchUrl) {
     const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
-    if (fetchedData.getResponseCode() !== 200) {
+    const fetchedDataResponseCode = fetchedData.getResponseCode();
+    if (fetchedDataResponseCode < 200 || fetchedDataResponseCode > 299) {
       throw new Error(fetchedData.getContentText());
     }
 
@@ -862,9 +868,12 @@ class MessagingService extends BaseNewsService {
    * @param {NewsItem[]} newsItems - 전송할 뉴스 아이템 배열
    */
   sendNewsItems(newsItems) {
-    newsItems.forEach((newsItem) => {
+    newsItems.forEach(async (newsItem) => {
       this._sendNewsItemToChannels(newsItem);
       this._newsItems.addNewsItem(newsItem);
+
+      // 채팅 솔루션별 초당/분당 request 횟수 제한을 고려하여 다음 항목 처리 전에 일시 중지 시간을 부여합니다.
+      await sleep(50);
     });
   }
 
@@ -912,7 +921,8 @@ class MessagingService extends BaseNewsService {
     }
 
     const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
-    if (fetchResponse.getResponseCode() !== 200) {
+    const fetchResponseCode = fetchResponse.getResponseCode();
+    if (fetchResponseCode < 200 || fetchResponseCode > 299) {
       throw new Error(fetchResponse.getContentText());
     }
   }
@@ -1126,6 +1136,7 @@ class NewsSourceFinder {
  * @property {function(Object): Object} slack - Slack용 뉴스 카드 객체 생성 함수
  * @property {function(Object): Object} jandi - JANDI용 뉴스 카드 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 뉴스 카드 객체 생성 함수
+ * @property {function(Object): Object} discord - Discord용 뉴스 카드 객체 생성 함수
  */
 const NewsCardGenerator = {
   /**
@@ -1215,11 +1226,12 @@ const NewsCardGenerator = {
   /**
    * 구글챗용 뉴스 카드를 생성합니다.
    * @param {Object} params - 뉴스 항목 정보
-   * @param {string} params.pubDateText - 발행일 텍스트
    * @param {string} params.title - 뉴스 제목
+   * @param {string} params.link - 뉴스 링크 URL
    * @param {string} params.source - 뉴스 출처
    * @param {string} params.description - 뉴스 설명
-   * @param {string} params.link - 뉴스 링크 URL
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {string[]} params.keywords - 뉴스에 해당하는 검색어 목록
    * @returns {Object} 구글챗 메시지 카드 객체
    */
   googleChat: ({ title, link, source, description, pubDateText, keywords }) => {
@@ -1266,6 +1278,46 @@ const NewsCardGenerator = {
       ],
     };
   },
+
+  /**
+   * 디스코드용 뉴스 카드를 생성합니다.
+   * @param {Object} params - 뉴스 항목 정보
+   * @param {string} params.title - 뉴스 제목
+   * @param {string} params.link - 뉴스 링크 URL
+   * @param {string} params.source - 뉴스 출처
+   * @param {string} params.description - 뉴스 설명
+   * @param {string} params.pubDateText - 발행일 텍스트
+   * @param {string[]} params.keywords - 뉴스에 해당하는 검색어 목록
+   * @returns {Object} 디스코드 메시지 카드 객체
+   */
+  discord: ({ title, link, source, description, pubDateText, keywords }) => {
+    return {
+      username: "네이버 뉴스봇",
+      embeds: [
+        {
+          author: {
+            name: source,
+          },
+          title,
+          url: link,
+          description,
+          color: 15258703,
+          fields: [
+            {
+              name: "게재시각",
+              value: pubDateText,
+              inline: true,
+            },
+            {
+              name: "검색어",
+              value: keywords.join(", "),
+              inline: true,
+            },
+          ],
+        },
+      ],
+    };
+  },
 };
 
 /**
@@ -1274,6 +1326,7 @@ const NewsCardGenerator = {
  * @property {function(Object): Object} slack - Slack용 메시지 객체 생성 함수
  * @property {function(Object): Object} jandi - JANDI용 메시지 객체 생성 함수
  * @property {function(Object): Object} googleChat - Google Chat용 메시지 객체 생성 함수
+ * @property {function(Object): Object} discord - Discord용 뉴스 카드 객체 생성 함수
  */
 const MessageGenerator = {
   /**
@@ -1318,6 +1371,18 @@ const MessageGenerator = {
   googleChat: (message) => {
     return {
       text: message,
+    };
+  },
+
+  /**
+   * 디스코드용 일반 메시지를 생성합니다.
+   * @param {string} message - 전송할 메시지 내용
+   * @returns {Object} 디스코드 메시지 객체
+   */
+  discord: (message) => {
+    return {
+      username: "네이버 뉴스봇",
+      content: message,
     };
   },
 };
@@ -1424,9 +1489,7 @@ const PropertyManager = {
     try {
       return PropertiesService.getScriptProperties().getProperty(property);
     } catch (error) {
-      throw new PropertyError(
-        `'${property}' 속성값을 불러오지 못했습니다.\n에러 원문 메시지 : ${error.message}`,
-      );
+      throw new PropertyError(`'${property}' 속성값을 불러오지 못했습니다.\n에러 원문 메시지 : ${error.message}`);
     }
   },
 
@@ -1440,9 +1503,7 @@ const PropertyManager = {
     try {
       PropertiesService.getScriptProperties().setProperty(property, value);
     } catch (error) {
-      throw new PropertyError(
-        `'${property}' 속성값을 저장하지 못했습니다.\n에러 원문 메시지 : ${error.message}`,
-      );
+      throw new PropertyError(`'${property}' 속성값을 저장하지 못했습니다.\n에러 원문 메시지 : ${error.message}`);
     }
   },
 };
@@ -1502,6 +1563,15 @@ function objectToQueryParams(params) {
 }
 
 /**
+ * 지정된 시간 동안 코드 실행을 일시 중지합니다.
+ * @param {number} ms - 일시 중지할 시간 (밀리초 단위)
+ * @returns {Promise<void>} 지정된 시간이 경과한 후 resolve되는 Promise
+ */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * 뉴스봇 구동 설정값을 검증합니다.
  * @param {Object} config - 뉴스봇 구동 설정값 객체
  * @throws {ConfigValidationError} 설정값 검증 실패시 에러 반환
@@ -1516,14 +1586,10 @@ function validateConfig(config) {
   }
 
   if (!Array.isArray(config.KEYWORDS) || config.KEYWORDS.length === 0) {
-    throw new ConfigValidationError(
-      "검색어 목록(KEYWORDS)에는 최소 하나 이상의 검색어를 포함해야 합니다.",
-    );
+    throw new ConfigValidationError("검색어 목록(KEYWORDS)에는 최소 하나 이상의 검색어를 포함해야 합니다.");
   }
   if (config.KEYWORDS.length > 5) {
-    throw new ConfigValidationError(
-      "검색어 목록(KEYWORDS)에 포함된 검색어는 최대 5개까지만 허용됩니다.",
-    );
+    throw new ConfigValidationError("검색어 목록(KEYWORDS)에 포함된 검색어는 최대 5개까지만 허용됩니다.");
   }
   config.KEYWORDS.forEach((keyword, index) => {
     if (typeof keyword !== "string" || keyword.trim() === "") {
@@ -1539,29 +1605,18 @@ function validateConfig(config) {
     );
   }
   if (typeof config.NAVER_API_CLIENT.ID !== "string" || config.NAVER_API_CLIENT.ID.trim() === "") {
-    throw new ConfigValidationError(
-      "네이버 검색 오픈 API의 Client ID(NAVER_API_CLIENT.ID)값이 비어 있습니다.",
-    );
+    throw new ConfigValidationError("네이버 검색 오픈 API의 Client ID(NAVER_API_CLIENT.ID)값이 비어 있습니다.");
   }
-  if (
-    typeof config.NAVER_API_CLIENT.SECRET !== "string" ||
-    config.NAVER_API_CLIENT.SECRET.trim() === ""
-  ) {
-    throw new ConfigValidationError(
-      "네이버 검색 오픈 API의 Secret(NAVER_API_CLIENT.SECRET)값이 비어 있습니다.",
-    );
+  if (typeof config.NAVER_API_CLIENT.SECRET !== "string" || config.NAVER_API_CLIENT.SECRET.trim() === "") {
+    throw new ConfigValidationError("네이버 검색 오픈 API의 Secret(NAVER_API_CLIENT.SECRET)값이 비어 있습니다.");
   }
 
   if (typeof config.WEBHOOK !== "object" || config.WEBHOOK === null) {
-    throw new ConfigValidationError(
-      "웹훅 주소 설정값(WEBHOOK)은 반드시 객체 형태로 작성되어야 합니다.",
-    );
+    throw new ConfigValidationError("웹훅 주소 설정값(WEBHOOK)은 반드시 객체 형태로 작성되어야 합니다.");
   }
   Object.keys(config.WEBHOOK).forEach((service) => {
     if (typeof config.WEBHOOK[service] !== "object" || config.WEBHOOK[service] === null) {
-      throw new ConfigValidationError(
-        `웹훅 주소 설정값(WEBHOOK) 안의 "${service}" 설정값은 객체 형태여야 합니다.`,
-      );
+      throw new ConfigValidationError(`웹훅 주소 설정값(WEBHOOK) 안의 "${service}" 설정값은 객체 형태여야 합니다.`);
     }
     if (typeof config.WEBHOOK[service].IS_ENABLED !== "boolean") {
       throw new ConfigValidationError(
@@ -1576,14 +1631,10 @@ function validateConfig(config) {
   });
 
   if (typeof config.ARCHIVING !== "object" || config.ARCHIVING === null) {
-    throw new ConfigValidationError(
-      "뉴스 저장 설정값(ARCHIVING)은 반드시 객체 형태로 작성되어야 합니다.",
-    );
+    throw new ConfigValidationError("뉴스 저장 설정값(ARCHIVING)은 반드시 객체 형태로 작성되어야 합니다.");
   }
   if (typeof config.ARCHIVING.IS_ENABLED !== "boolean") {
-    throw new ConfigValidationError(
-      "뉴스 저장 여부 설정값(ARCHIVING.IS_ENABLED)은 true 혹은 false여야 합니다.",
-    );
+    throw new ConfigValidationError("뉴스 저장 여부 설정값(ARCHIVING.IS_ENABLED)은 true 혹은 false여야 합니다.");
   }
   if (typeof config.ARCHIVING.SHEET_INFO !== "object" || config.ARCHIVING.SHEET_INFO === null) {
     throw new ConfigValidationError(
@@ -1598,10 +1649,7 @@ function validateConfig(config) {
     }
   });
 
-  if (
-    Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) &&
-    !config.ARCHIVING.IS_ENABLED
-  ) {
+  if (Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) && !config.ARCHIVING.IS_ENABLED) {
     throw new ConfigValidationError(
       "뉴스 항목을 전송할 웹훅 사용 여부(CONFIG.WEBHOOK.*.IS_ENABLED)와 뉴스 항목 저장 여부(CONFIG.ARCHIVING.IS_ENABLED) 가운데 최소 1가지 이상은 true여야 합니다.",
     );

@@ -65,6 +65,10 @@ const CONFIG = {
       IS_ENABLED      : false,
       URL             : "",
     },
+    DISCORD           : {
+      IS_ENABLED      : false,
+      URL             : "",
+    },
   },
 
   // 뉴스 항목을 저장할 구글 시트(Google Sheet) 문서 경로
