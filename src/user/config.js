@@ -70,6 +70,16 @@ export const CONFIG = {
       URL             : "",
     },
   },
+
+  // 뉴스 항목을 저장할 구글 시트(Google Sheet) 문서 경로
+  ARCHIVING           : {
+    IS_ENABLED        : false,
+    SHEET_INFO        : {
+      ID                : "",
+      NAME              : "",
+      TARGET_CELL       : "",
+    },
+  },
 };
 
 export default CONFIG;
