@@ -41,16 +41,16 @@ export const PropertyManager = {
  * @returns {string} 일부 특수문자가 처리된 기사 제목/요약문 텍스트
  */
 export function getBleachedText(text) {
-  text = text.replace(/(<([^>]+)>)/gi, "");
-  text = text.replace(/&quot;/gi, '"');
-  text = text.replace(/&#039;/gi, "'");
-  text = text.replace(/&lt;/gi, "<");
-  text = text.replace(/&gt;/gi, ">");
-  text = text.replace(/&amp;/gi, "&");
-  text = text.replace(/`/gi, "'");
-  text = text.replace(/&apos;/gi, "'");
-
-  return text;
+  return text
+    .replace(/(<([^>]+)>)/gi, "")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&")
+    .replace(/`/gi, "'")
+    .replace((/&apos;/gi, "'"))
+    .replace(/^= /, "");
 }
 
 /**
