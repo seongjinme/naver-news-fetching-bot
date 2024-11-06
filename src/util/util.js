@@ -90,6 +90,19 @@ export function objectToQueryParams(params) {
 }
 
 /**
+ * 주어진 URL에서 Google SpreadSheet ID값을 추출하여 반환합니다.
+ * @param {string} sheetUrl - Google SpreadSheet 공유용 URL string 전체
+ * @returns {string|null} 추출된 ID값 (없을 경우 null)
+ */
+export function getSpreadSheetId(sheetUrl) {
+  const urlPattern = /https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)\/edit/;
+  const matchedPattern = sheetUrl.match(urlPattern);
+
+  if (!matchedPattern) return null;
+  return matchedPattern[1];
+}
+
+/**
  * 지정된 시간 동안 코드 실행을 일시 중지합니다.
  * @param {number} ms - 일시 중지할 시간 (밀리초 단위)
  * @returns {Promise<void>} 지정된 시간이 경과한 후 resolve되는 Promise

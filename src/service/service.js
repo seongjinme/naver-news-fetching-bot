@@ -1,5 +1,5 @@
 import { NewsItem, NewsItemMap } from "../domain/domain";
-import { getBleachedText, toCamelCase, objectToQueryParams } from "../util/util";
+import { getBleachedText, toCamelCase, objectToQueryParams, getSpreadSheetId } from "../util/util";
 
 /**
  * BaseNewsService는 뉴스 관련 서비스들의 기본 클래스로, 뉴스 데이터 관리를 위한 공통 기능을 제공합니다.
@@ -287,25 +287,26 @@ export class ArchivingService extends BaseNewsService {
    * ArchivingService 클래스의 생성자입니다.
    * @param {Object} params - 생성자 매개변수
    * @param {Object} params.config - 구글 시트 설정 정보
-   * @param {string} params.config.ID - 스프레드시트 ID
+   * @param {string} params.config.URL - 스프레드시트 URL
    * @param {string} params.config.NAME - 워크시트 이름
    */
   constructor({ config }) {
     super();
     this._config = { ...config };
-    this._spreadSheet = this._getSpreadSheet(this._config.ID);
-    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME);
+    this._spreadSheet = this._getSpreadSheet(this._config.URL);
+    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME || "뉴스피드");
     this._workSheetTargetCell = `${this._config.NAME}!A2`;
   }
 
   /**
    * 스프레드시트 객체를 가져옵니다.
-   * @param {string} spreadSheetId - 스프레드시트 ID
+   * @param {string} spreadSheetUrl - 스프레드시트 문서 URL
    * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} 스프레드시트 객체
    * @private
    */
-  _getSpreadSheet(spreadSheetId) {
+  _getSpreadSheet(spreadSheetUrl) {
     try {
+      const spreadSheetId = getSpreadSheetId(spreadSheetUrl);
       return SpreadsheetApp.openById(spreadSheetId);
     } catch (error) {
       throw new Error(error.message);
