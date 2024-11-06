@@ -49,7 +49,7 @@ export function getBleachedText(text) {
     .replace(/&gt;/gi, ">")
     .replace(/&amp;/gi, "&")
     .replace(/`/gi, "'")
-    .replace((/&apos;/gi, "'"))
+    .replace(/&apos;/gi, "'")
     .replace(/^= /, "");
 }
 
