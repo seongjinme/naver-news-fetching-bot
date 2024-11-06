@@ -2,7 +2,7 @@
  * Naver News Fetching Bot (v3.0.0)
  * ***********************************************************************************************
  * 원하는 검색어가 포함된 최신 네이버 뉴스를 업무용 채팅 솔루션으로 전송합니다.
- * 슬랙(Slack), 잔디(JANDI), 구글챗(Google Chat Space)을 지원합니다.
+ * 슬랙(Slack), 디스코드(Discord), 잔디(JANDI), 구글챗(Google Chat Space)을 지원합니다.
  * Google Apps Script와 네이버 검색 오픈 API를 이용합니다.
  *
  * config.gs에서 뉴스봇 구동에 필요한 설정값들을 미리 삽입하신 뒤에 이용해주세요.
@@ -936,25 +936,26 @@ class ArchivingService extends BaseNewsService {
    * ArchivingService 클래스의 생성자입니다.
    * @param {Object} params - 생성자 매개변수
    * @param {Object} params.config - 구글 시트 설정 정보
-   * @param {string} params.config.ID - 스프레드시트 ID
+   * @param {string} params.config.URL - 스프레드시트 URL
    * @param {string} params.config.NAME - 워크시트 이름
    */
   constructor({ config }) {
     super();
     this._config = { ...config };
-    this._spreadSheet = this._getSpreadSheet(this._config.ID);
-    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME);
+    this._spreadSheet = this._getSpreadSheet(this._config.URL);
+    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME || "뉴스피드");
     this._workSheetTargetCell = `${this._config.NAME}!A2`;
   }
 
   /**
    * 스프레드시트 객체를 가져옵니다.
-   * @param {string} spreadSheetId - 스프레드시트 ID
+   * @param {string} spreadSheetUrl - 스프레드시트 문서 URL
    * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} 스프레드시트 객체
    * @private
    */
-  _getSpreadSheet(spreadSheetId) {
+  _getSpreadSheet(spreadSheetUrl) {
     try {
+      const spreadSheetId = getSpreadSheetId(spreadSheetUrl);
       return SpreadsheetApp.openById(spreadSheetId);
     } catch (error) {
       throw new Error(error.message);
@@ -1123,13 +1124,6 @@ class NewsSourceFinder {
     return subpathIndex;
   }
 }
-/*************************************************************************************************
- * Naver News Fetching Bot: template.gs
- * ***********************************************************************************************
- * 네이버 뉴스가 메신저로 전송될 때 표시될 레이아웃을 이곳에서 편집하실 수 있습니다.
- * 상세 레이아웃 설정 방법은 각 메신저별 개발자 문서를 참고해주세요.
- * ***********************************************************************************************/
-
 /**
  * 각 메신저별 뉴스 전송용 메시지 카드 레이아웃을 생성하는 유틸리티 객체입니다.
  * @typedef {Object} NewsCardGenerator
@@ -1514,16 +1508,16 @@ const PropertyManager = {
  * @returns {string} 일부 특수문자가 처리된 기사 제목/요약문 텍스트
  */
 function getBleachedText(text) {
-  text = text.replace(/(<([^>]+)>)/gi, "");
-  text = text.replace(/&quot;/gi, '"');
-  text = text.replace(/&#039;/gi, "'");
-  text = text.replace(/&lt;/gi, "<");
-  text = text.replace(/&gt;/gi, ">");
-  text = text.replace(/&amp;/gi, "&");
-  text = text.replace(/`/gi, "'");
-  text = text.replace(/&apos;/gi, "'");
-
-  return text;
+  return text
+    .replace(/(<([^>]+)>)/gi, "")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&")
+    .replace(/`/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/^= /, "");
 }
 
 /**
@@ -1560,6 +1554,19 @@ function objectToQueryParams(params) {
   return Object.entries(params)
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join("&");
+}
+
+/**
+ * 주어진 URL에서 Google SpreadSheet ID값을 추출하여 반환합니다.
+ * @param {string} sheetUrl - Google SpreadSheet 공유용 URL string 전체
+ * @returns {string|null} 추출된 ID값 (없을 경우 null)
+ */
+function getSpreadSheetId(sheetUrl) {
+  const urlPattern = /https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)\/edit/;
+  const matchedPattern = sheetUrl.match(urlPattern);
+
+  if (!matchedPattern) return null;
+  return matchedPattern[1];
 }
 
 /**

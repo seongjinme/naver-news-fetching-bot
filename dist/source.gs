@@ -1,10 +1,10 @@
 /*************************************************************************************************
- * Naver News Fetching Bot: newsSource.gs
+ * Naver News Fetching Bot: source.gs
  * ***********************************************************************************************
  * 네이버 뉴스가 메신저로 전송될 때 포함되는 매체명 데이터를 이곳에서 편집하실 수 있습니다.
  * 새로운 매체를 추가하시려면 프로토콜(http://, https://)과 www를 제외한 전체 도메인 이름과 매체명을 짝지어 삽입해 주세요.
  *
- * - 마지막 업데이트 : 2024년 11월 4일
+ * - 마지막 업데이트 : 2024년 11월 6일
  * ***********************************************************************************************/
 
 const NEWS_SOURCE = Object.freeze({
@@ -26,6 +26,7 @@ const NEWS_SOURCE = Object.freeze({
   "andongmbc.co.kr": "안동MBC",
   "apnews.kr": "AP신문",
   "apparelnews.co.kr": "어패럴뉴스",
+  "appstory.co.kr": "앱스토리",
   "apsk.co.kr": "한국스포츠통신",
   "aptn.co.kr": "아파트관리신문",
   "areyou.co.kr": "아유경제",
@@ -122,6 +123,7 @@ const NEWS_SOURCE = Object.freeze({
   "consumernews.co.kr": "소비자가 만드는 신문",
   "consumuch.com": "컨슈머치",
   "cooknchefnews.com": "쿡앤셰프",
+  "cpbc.co.kr": "cpbc플러스",
   "cstimes.com": "컨슈머타임스",
   "cts.tv": "CTS",
   "cwn.kr": "센트럴월드뉴스",
@@ -337,6 +339,7 @@ const NEWS_SOURCE = Object.freeze({
   "imnews.imbc.com": "MBC",
   "impacton.net": "임팩트온",
   "imwood.co.kr": "나무신문",
+  "incheonilbo.com": "인천일보",
   "incheonin.com": "인천in",
   "incheonnews.com": "인천뉴스",
   "industrynews.co.kr": "인더스트리뉴스",
@@ -368,6 +371,7 @@ const NEWS_SOURCE = Object.freeze({
   "iusm.co.kr": "울산매일신문",
   "ize.co.kr": "아이즈 ize",
   "jbnews.com": "중부매일",
+  "jbsori.com": "전북의소리",
   "jejudomin.co.kr": "제주도민일보",
   "jejuilbo.net": "뉴제주일보",
   "jejumaeil.net": "제주매일",
@@ -402,6 +406,7 @@ const NEWS_SOURCE = Object.freeze({
   "joynews24.com": "조이뉴스24",
   "jtbc.co.kr": "JTBC",
   "jtbc.joins.com": "JTBC",
+  "jtbcgolf.joins.com": "JTBC 골프",
   "jtv.co.kr": "JTV전주방송",
   "jumpball.co.kr": "점프볼",
   "junggi.co.kr": "중기이코노미",
@@ -451,6 +456,7 @@ const NEWS_SOURCE = Object.freeze({
   "koreastocknews.com": "증권경제신문",
   "koreatimes.com": "미주한국일보",
   "kormedi.com": "코메디닷컴",
+  "koscaj.com": "대한전문건설신문",
   "kpanews.co.kr": "약사공론",
   "kpenews.com": "한국정경신문",
   "kpinews.co.kr": "굿모닝경제",
@@ -549,6 +555,7 @@ const NEWS_SOURCE = Object.freeze({
   "namdonews.com": "남도일보",
   "nbnews.kr": "NBNews",
   "nbntv.co.kr": "내외경제tv",
+  "nbntv.kr": "NBN미디어",
   "netongs.com": "여수넷통뉴스",
   "newdaily.co.kr": "뉴데일리",
   "news1.kr": "뉴스1",
@@ -636,10 +643,12 @@ const NEWS_SOURCE = Object.freeze({
   "pressman.kr": "프레스맨",
   "psnews.co.kr": "퍼블릭뉴스",
   "psychiatricnews.net": "정신의학신문",
+  "public25.com": "공생공사닷컴",
   "queen.co.kr": "Queen",
   "radio.ytn.co.kr": "YTN 라디오",
   "radiokorea.com": "라디오코리아",
   "rank5.kr": "RANK5",
+  "raonnews.com": "라온신문",
   "rapportian.com": "라포르시안",
   "rcast.co.kr": "리얼캐스트",
   "readersnews.com": "독서신문",
@@ -742,6 +751,7 @@ const NEWS_SOURCE = Object.freeze({
   "tfmedia.co.kr": "조세금융신문",
   "tfnews.co.kr": "조세금융신문",
   "the-pr.co.kr": "더피알",
+  "the-stock.kr": "더스탁",
   "thebell.co.kr": "더벨",
   "thebigdata.co.kr": "빅데이터뉴스",
   "thebilliards.kr": "빌리어즈",
@@ -788,6 +798,7 @@ const NEWS_SOURCE = Object.freeze({
   "tvdaily.co.kr": "티브이데일리",
   "tvreport.co.kr": "TV리포트",
   "ujeil.com": "울산제일일보",
+  "ulsanpress.net": "울산신문",
   "unn.net": "한국대학신문",
   "updownnews.co.kr": "업다운뉴스",
   "upinews.kr": "UPI뉴스",
