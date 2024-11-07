@@ -41,7 +41,8 @@ export default class NewsFetchingBotController {
     });
 
     this._archivingService = new ArchivingService({
-      config: CONFIG.ARCHIVING.SHEET_INFO,
+      isEnabled: CONFIG.ARCHIVING.IS_ENABLED,
+      sheetInfo: CONFIG.ARCHIVING.SHEET_INFO,
     });
 
     this._isArchivingOnlyMode =

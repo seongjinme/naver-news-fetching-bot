@@ -1,4 +1,5 @@
 import { NewsItem, NewsItemMap } from "../domain/domain";
+import { ProcessError, NewsFetchError } from "../util/error";
 import { getBleachedText, toCamelCase, objectToQueryParams, getSpreadSheetId } from "../util/util";
 
 /**
@@ -134,7 +135,7 @@ export class FetchingService extends BaseNewsService {
     const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
     const fetchedDataResponseCode = fetchedData.getResponseCode();
     if (fetchedDataResponseCode < 200 || fetchedDataResponseCode > 299) {
-      throw new Error(fetchedData.getContentText());
+      throw new NewsFetchError(fetchedData.getContentText());
     }
 
     return JSON.parse(fetchedData).items || [];
@@ -274,7 +275,7 @@ export class MessagingService extends BaseNewsService {
     const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
     const fetchResponseCode = fetchResponse.getResponseCode();
     if (fetchResponseCode < 200 || fetchResponseCode > 299) {
-      throw new Error(fetchResponse.getContentText());
+      throw new ProcessError(fetchResponse.getContentText());
     }
   }
 }
@@ -286,30 +287,33 @@ export class ArchivingService extends BaseNewsService {
   /**
    * ArchivingService 클래스의 생성자입니다.
    * @param {Object} params - 생성자 매개변수
-   * @param {Object} params.config - 구글 시트 설정 정보
-   * @param {string} params.config.URL - 스프레드시트 URL
-   * @param {string} params.config.NAME - 워크시트 이름
+   * @param {boolean} params.isEnabled - 구글 시트 저장 기능 사용 여부
+   * @param {Object} params.sheetInfo - 구글 시트 설정 정보
+   * @param {string} params.sheetInfo.URL - 스프레드시트 URL
+   * @param {string} params.sheetInfo.NAME - 워크시트 이름
    */
-  constructor({ config }) {
+  constructor({ isEnabled, sheetInfo }) {
     super();
-    this._config = { ...config };
-    this._spreadSheet = this._getSpreadSheet(this._config.URL);
-    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME || "뉴스피드");
-    this._workSheetTargetCell = `${this._config.NAME}!A2`;
+    this._isEnabled = isEnabled;
+    this._spreadSheet = isEnabled ? this._getSpreadSheet(sheetInfo.URL) : null;
+    this._workSheet = this._spreadSheet && isEnabled ? this._getOrCreateWorkSheet(sheetInfo.NAME || "뉴스피드") : null;
+    this._workSheetTargetCell = `${sheetInfo.NAME || "뉴스피드"}!A2`;
   }
 
   /**
    * 스프레드시트 객체를 가져옵니다.
    * @param {string} spreadSheetUrl - 스프레드시트 문서 URL
-   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} 스프레드시트 객체
+   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet|null} 스프레드시트 객체 (없을 경우 null)
    * @private
    */
   _getSpreadSheet(spreadSheetUrl) {
     try {
       const spreadSheetId = getSpreadSheetId(spreadSheetUrl);
+      if (!spreadSheetId) return null;
+
       return SpreadsheetApp.openById(spreadSheetId);
     } catch (error) {
-      throw new Error(error.message);
+      throw new ProcessError(error.message);
     }
   }
 
@@ -321,9 +325,8 @@ export class ArchivingService extends BaseNewsService {
    */
   _getOrCreateWorkSheet(workSheetName) {
     const existingSheet = this._spreadSheet.getSheetByName(workSheetName);
-    if (existingSheet) {
-      return existingSheet;
-    }
+    if (existingSheet) return existingSheet;
+
     return this._createNewWorkSheet(workSheetName);
   }
 
@@ -337,9 +340,9 @@ export class ArchivingService extends BaseNewsService {
     try {
       const newWorkSheet = this._spreadSheet.insertSheet(workSheetName, 1);
 
+      const headerTargetCell = `${workSheetName}!A1`;
       const headerRange = Sheets.newValueRange();
       headerRange.values = [["날짜/시각", "제목", "매체명", "URL", "내용", "검색어"]];
-      const headerTargetCell = `${workSheetName}!A1`;
 
       Sheets.Spreadsheets.Values.update(headerRange, this._spreadSheet.getId(), headerTargetCell, {
         valueInputOption: "RAW",
@@ -347,7 +350,7 @@ export class ArchivingService extends BaseNewsService {
 
       return newWorkSheet;
     } catch (error) {
-      throw new Error(error.message);
+      throw new ProcessError(error.message);
     }
   }
 
@@ -356,6 +359,12 @@ export class ArchivingService extends BaseNewsService {
    * @param {NewsItem[]} newsItems - 저장할 뉴스 아이템들 데이터
    */
   archiveNewsItems(newsItems) {
+    if (!this._workSheet) {
+      throw new ProcessError(
+        "뉴스를 저장할 구글 시트 정보가 올바르게 설정되지 않았습니다. 설정값을 다시 확인해주세요.",
+      );
+    }
+
     try {
       this._workSheet.insertRowsBefore(2, newsItems.length);
       const valueRange = Sheets.newValueRange();
@@ -367,7 +376,7 @@ export class ArchivingService extends BaseNewsService {
 
       this._newsItems.addNewsItems(newsItems);
     } catch (error) {
-      throw new Error(error.message);
+      throw new ProcessError(error.message);
     }
   }
 }
