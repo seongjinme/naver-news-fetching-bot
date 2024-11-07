@@ -188,6 +188,11 @@ export function validateConfig(config) {
       );
     }
   });
+  if (config.ARCHIVING.IS_ENABLED && typeof Sheets === "undefined") {
+    throw new ConfigValidationError(
+      "구글 시트로 뉴스를 저장하시려면, 스크립트 실행 환경 좌측의 서비스(Services)에서 Google Sheets API를 'Sheets'라는 이름으로 불러오도록 설정되어 있어야 합니다.",
+    );
+  }
 
   if (Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) && !config.ARCHIVING.IS_ENABLED) {
     throw new ConfigValidationError(
