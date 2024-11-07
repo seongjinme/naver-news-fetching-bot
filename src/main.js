@@ -38,7 +38,7 @@ export default function runNewsFetchingBot() {
     }
 
     if (controller.fetchNewsItems().length > 0) {
-      controller.sendNewsItems();
+      controller.deliverNewsItems();
       controller.archiveNewsItems();
     }
 

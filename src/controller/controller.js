@@ -94,8 +94,11 @@ export default class NewsFetchingBotController {
         Logger.log("[INFO] 디버그 모드 실행: 등록된 검색 키워드별 최근 1개 뉴스를 로깅합니다.");
         this._printFetchedNewsItems(sampleNewsItems);
       } else {
-        Logger.log("[INFO] 등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.");
-        this.sendNewsItems();
+        const sampleNewsDeliverMessage = "등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.";
+        this._messagingService.sendMessage(`[네이버 뉴스봇] ${sampleNewsDeliverMessage}`);
+        Logger.log(`[INFO] ${sampleNewsDeliverMessage}`);
+
+        this._sendNewsItems(sampleNewsItems);
       }
 
       this._saveInitialProperties();
@@ -144,29 +147,38 @@ export default class NewsFetchingBotController {
   }
 
   /**
-   * 뉴스 항목을 채팅 서비스로 전송합니다.
+   * 뉴스 데이터를 새로 받아온 뒤 채팅 서비스로 전송합니다.
    */
-  sendNewsItems() {
-    if (!this._isWebhookConfigured()) {
-      Logger.log("[INFO] 뉴스를 전송할 채팅 서비스가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.");
-      return;
-    }
-
+  deliverNewsItems() {
     try {
-      const fetchedNewsItems = this._fetchingService.getNewsItems({ sortByDesc: false });
-
-      if (fetchedNewsItems.length === 0) {
-        Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
+      if (!this._isWebhookConfigured()) {
+        Logger.log("[INFO] 뉴스를 전송할 채팅 서비스가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.");
         return;
       }
 
-      this._messagingService.sendNewsItems(fetchedNewsItems);
+      const fetchedNewsItems = this._fetchingService.getNewsItems({ sortByDesc: false });
+
+      this._sendNewsItems(fetchedNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 전송이 완료되었습니다.");
     } catch (error) {
       Logger.log(
         `[ERROR] 뉴스 항목 전송 중 오류가 발생했습니다. 현재 작업을 종료하고 다음 단계로 넘어갑니다.\n오류 내용: ${error.message}`,
       );
     }
+  }
+
+  /**
+   * 인자로 받은 뉴스 항목들을 채팅 서비스로 전송합니다.
+   * @param {NewsItem[]} newsItems - 전송할 뉴스 항목들
+   * @private
+   */
+  _sendNewsItems(newsItems) {
+    if (newsItems.length === 0) {
+      Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
+      return;
+    }
+
+    this._messagingService.sendNewsItems(newsItems);
   }
 
   /**
@@ -293,7 +305,7 @@ export default class NewsFetchingBotController {
    * @private
    */
   _createInitialLastDeliveredNewsPubDate() {
-    return new Date(new Date().getTime() - 60 * 1000);
+    return new Date(new Date().getTime() - 60 * 60 * 1000);
   }
 
   /**
@@ -318,7 +330,7 @@ export default class NewsFetchingBotController {
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
       lastDeliveredNewsHashIds: this._fetchingService.newsHashIds,
-      lastDeliveredNewsPubDate: this._fetchingService.newsPubDate ?? this._lastDeliveredNewsPubDate,
+      lastDeliveredNewsPubDate: this._fetchingService.latestNewsPubDate ?? this._lastDeliveredNewsPubDate,
       initializationCompleted: true,
     });
   }
