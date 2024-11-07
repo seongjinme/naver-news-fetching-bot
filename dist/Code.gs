@@ -35,7 +35,7 @@ function runNewsFetchingBot() {
     }
 
     if (controller.fetchNewsItems().length > 0) {
-      controller.sendNewsItems();
+      controller.deliverNewsItems();
       controller.archiveNewsItems();
     }
 
@@ -56,6 +56,11 @@ function runNewsFetchingBot() {
 
     if (error instanceof NewsFetchError) {
       Logger.log(`[ERROR] 뉴스 수신 중 오류 발생: ${error.message}`);
+      return;
+    }
+
+    if (error instanceof ProcessError) {
+      Logger.log(`[ERROR] 뉴스봇 실행 중 오류 발생: ${error.message}`);
       return;
     }
 
@@ -103,7 +108,8 @@ class NewsFetchingBotController {
     });
 
     this._archivingService = new ArchivingService({
-      config: CONFIG.ARCHIVING.SHEET_INFO,
+      isEnabled: CONFIG.ARCHIVING.IS_ENABLED,
+      sheetInfo: CONFIG.ARCHIVING.SHEET_INFO,
     });
 
     this._isArchivingOnlyMode =
@@ -155,8 +161,11 @@ class NewsFetchingBotController {
         Logger.log("[INFO] 디버그 모드 실행: 등록된 검색 키워드별 최근 1개 뉴스를 로깅합니다.");
         this._printFetchedNewsItems(sampleNewsItems);
       } else {
-        Logger.log("[INFO] 등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.");
-        this.sendNewsItems();
+        const sampleNewsDeliverMessage = "등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.";
+        this._messagingService.sendMessage(`[네이버 뉴스봇] ${sampleNewsDeliverMessage}`);
+        Logger.log(`[INFO] ${sampleNewsDeliverMessage}`);
+
+        this._sendNewsItems(sampleNewsItems);
       }
 
       this._saveInitialProperties();
@@ -205,29 +214,38 @@ class NewsFetchingBotController {
   }
 
   /**
-   * 뉴스 항목을 채팅 서비스로 전송합니다.
+   * 뉴스 데이터를 새로 받아온 뒤 채팅 서비스로 전송합니다.
    */
-  sendNewsItems() {
-    if (!this._isWebhookConfigured()) {
-      Logger.log("[INFO] 뉴스를 전송할 채팅 서비스가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.");
-      return;
-    }
-
+  deliverNewsItems() {
     try {
-      const fetchedNewsItems = this._fetchingService.getNewsItems({ sortByDesc: false });
-
-      if (fetchedNewsItems.length === 0) {
-        Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
+      if (!this._isWebhookConfigured()) {
+        Logger.log("[INFO] 뉴스를 전송할 채팅 서비스가 설정되어 있지 않습니다. 다음 단계로 넘어갑니다.");
         return;
       }
 
-      this._messagingService.sendNewsItems(fetchedNewsItems);
+      const fetchedNewsItems = this._fetchingService.getNewsItems({ sortByDesc: false });
+
+      this._sendNewsItems(fetchedNewsItems);
       Logger.log("[SUCCESS] 뉴스 항목 전송이 완료되었습니다.");
     } catch (error) {
       Logger.log(
         `[ERROR] 뉴스 항목 전송 중 오류가 발생했습니다. 현재 작업을 종료하고 다음 단계로 넘어갑니다.\n오류 내용: ${error.message}`,
       );
     }
+  }
+
+  /**
+   * 인자로 받은 뉴스 항목들을 채팅 서비스로 전송합니다.
+   * @param {NewsItem[]} newsItems - 전송할 뉴스 항목들
+   * @private
+   */
+  _sendNewsItems(newsItems) {
+    if (newsItems.length === 0) {
+      Logger.log("[INFO] 전송할 새 뉴스 항목이 없습니다.");
+      return;
+    }
+
+    this._messagingService.sendNewsItems(newsItems);
   }
 
   /**
@@ -354,7 +372,7 @@ class NewsFetchingBotController {
    * @private
    */
   _createInitialLastDeliveredNewsPubDate() {
-    return new Date(new Date().getTime() - 60 * 1000);
+    return new Date(new Date().getTime() - 60 * 60 * 1000);
   }
 
   /**
@@ -379,7 +397,7 @@ class NewsFetchingBotController {
     this.savePropertiesWithParams({
       searchKeywords: this._searchKeywords,
       lastDeliveredNewsHashIds: this._fetchingService.newsHashIds,
-      lastDeliveredNewsPubDate: this._fetchingService.newsPubDate ?? this._lastDeliveredNewsPubDate,
+      lastDeliveredNewsPubDate: this._fetchingService.latestNewsPubDate ?? this._lastDeliveredNewsPubDate,
       initializationCompleted: true,
     });
   }
@@ -783,7 +801,7 @@ class FetchingService extends BaseNewsService {
     const fetchedData = UrlFetchApp.fetch(fetchUrl, this._fetchOptions);
     const fetchedDataResponseCode = fetchedData.getResponseCode();
     if (fetchedDataResponseCode < 200 || fetchedDataResponseCode > 299) {
-      throw new Error(fetchedData.getContentText());
+      throw new NewsFetchError(fetchedData.getContentText());
     }
 
     return JSON.parse(fetchedData).items || [];
@@ -923,7 +941,7 @@ class MessagingService extends BaseNewsService {
     const fetchResponse = UrlFetchApp.fetch(webhookUrl, params);
     const fetchResponseCode = fetchResponse.getResponseCode();
     if (fetchResponseCode < 200 || fetchResponseCode > 299) {
-      throw new Error(fetchResponse.getContentText());
+      throw new ProcessError(fetchResponse.getContentText());
     }
   }
 }
@@ -935,30 +953,33 @@ class ArchivingService extends BaseNewsService {
   /**
    * ArchivingService 클래스의 생성자입니다.
    * @param {Object} params - 생성자 매개변수
-   * @param {Object} params.config - 구글 시트 설정 정보
-   * @param {string} params.config.URL - 스프레드시트 URL
-   * @param {string} params.config.NAME - 워크시트 이름
+   * @param {boolean} params.isEnabled - 구글 시트 저장 기능 사용 여부
+   * @param {Object} params.sheetInfo - 구글 시트 설정 정보
+   * @param {string} params.sheetInfo.URL - 스프레드시트 URL
+   * @param {string} params.sheetInfo.NAME - 워크시트 이름
    */
-  constructor({ config }) {
+  constructor({ isEnabled, sheetInfo }) {
     super();
-    this._config = { ...config };
-    this._spreadSheet = this._getSpreadSheet(this._config.URL);
-    this._workSheet = this._getOrCreateWorkSheet(this._config.NAME || "뉴스피드");
-    this._workSheetTargetCell = `${this._config.NAME}!A2`;
+    this._isEnabled = isEnabled;
+    this._spreadSheet = isEnabled ? this._getSpreadSheet(sheetInfo.URL) : null;
+    this._workSheet = this._spreadSheet && isEnabled ? this._getOrCreateWorkSheet(sheetInfo.NAME || "뉴스피드") : null;
+    this._workSheetTargetCell = `${sheetInfo.NAME || "뉴스피드"}!A2`;
   }
 
   /**
    * 스프레드시트 객체를 가져옵니다.
    * @param {string} spreadSheetUrl - 스프레드시트 문서 URL
-   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet} 스프레드시트 객체
+   * @returns {GoogleAppsScript.Spreadsheet.Spreadsheet|null} 스프레드시트 객체 (없을 경우 null)
    * @private
    */
   _getSpreadSheet(spreadSheetUrl) {
     try {
       const spreadSheetId = getSpreadSheetId(spreadSheetUrl);
+      if (!spreadSheetId) return null;
+
       return SpreadsheetApp.openById(spreadSheetId);
     } catch (error) {
-      throw new Error(error.message);
+      throw new ProcessError(error.message);
     }
   }
 
@@ -970,9 +991,8 @@ class ArchivingService extends BaseNewsService {
    */
   _getOrCreateWorkSheet(workSheetName) {
     const existingSheet = this._spreadSheet.getSheetByName(workSheetName);
-    if (existingSheet) {
-      return existingSheet;
-    }
+    if (existingSheet) return existingSheet;
+
     return this._createNewWorkSheet(workSheetName);
   }
 
@@ -986,9 +1006,9 @@ class ArchivingService extends BaseNewsService {
     try {
       const newWorkSheet = this._spreadSheet.insertSheet(workSheetName, 1);
 
+      const headerTargetCell = `${workSheetName}!A1`;
       const headerRange = Sheets.newValueRange();
       headerRange.values = [["날짜/시각", "제목", "매체명", "URL", "내용", "검색어"]];
-      const headerTargetCell = `${workSheetName}!A1`;
 
       Sheets.Spreadsheets.Values.update(headerRange, this._spreadSheet.getId(), headerTargetCell, {
         valueInputOption: "RAW",
@@ -996,7 +1016,7 @@ class ArchivingService extends BaseNewsService {
 
       return newWorkSheet;
     } catch (error) {
-      throw new Error(error.message);
+      throw new ProcessError(error.message);
     }
   }
 
@@ -1005,6 +1025,12 @@ class ArchivingService extends BaseNewsService {
    * @param {NewsItem[]} newsItems - 저장할 뉴스 아이템들 데이터
    */
   archiveNewsItems(newsItems) {
+    if (!this._workSheet) {
+      throw new ProcessError(
+        "뉴스를 저장할 구글 시트 정보가 올바르게 설정되지 않았습니다. 설정값을 다시 확인해주세요.",
+      );
+    }
+
     try {
       this._workSheet.insertRowsBefore(2, newsItems.length);
       const valueRange = Sheets.newValueRange();
@@ -1016,7 +1042,7 @@ class ArchivingService extends BaseNewsService {
 
       this._newsItems.addNewsItems(newsItems);
     } catch (error) {
-      throw new Error(error.message);
+      throw new ProcessError(error.message);
     }
   }
 }
@@ -1438,6 +1464,21 @@ class PropertyError extends Error {
 }
 
 /**
+ * 뉴스봇 실행 중 발생한 오류를 나타내는 사용자 정의 에러 클래스입니다.
+ * @extends Error
+ */
+class ProcessError extends Error {
+  /**
+   * ProcessError 생성자
+   * @param {string} message - 오류 메시지
+   */
+  constructor(message) {
+    super(message);
+    this.name = "ProcessError";
+  }
+}
+
+/**
  * 뉴스 수신 중 발생한 오류에 대한 사용자 정의 에러 클래스입니다.
  * @extends Error
  */
@@ -1655,6 +1696,11 @@ function validateConfig(config) {
       );
     }
   });
+  if (config.ARCHIVING.IS_ENABLED && typeof Sheets === "undefined") {
+    throw new ConfigValidationError(
+      "구글 시트로 뉴스를 저장하시려면, 스크립트 실행 환경 좌측의 서비스(Services)에서 Google Sheets API를 'Sheets'라는 이름으로 불러오도록 설정되어 있어야 합니다.",
+    );
+  }
 
   if (Object.values(config.WEBHOOK).every(({ IS_ENABLED, _ }) => !IS_ENABLED) && !config.ARCHIVING.IS_ENABLED) {
     throw new ConfigValidationError(
