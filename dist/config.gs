@@ -27,10 +27,9 @@ const CONFIG = {
    *   - IS_ENABLED   : 해당 서비스로의 뉴스 전송 여부 (쌍따옴표 없이 true/false로만 입력)
    *   - URL          : 해당 서비스에 설정된 웹훅 URL 주소
    *
-   * ARCHIVING_SHEET  : [선택] 뉴스 항목을 구글 시트(Google Sheet)에 저장하기 위한 설정값입니다.
+   * ARCHIVING        : [선택] 뉴스 항목을 구글 시트(Google Sheet)에 저장하기 위한 설정값입니다.
    *                    사용하실 경우 IS_ENABLED의 값을 true로, 그렇지 않은 경우 false로 입력해 주세요.
-   *                    IS_ENABLED의 값을 true로 설정하시더라도
-   *                    SHEET_INFO 안의 ID, NAME, TARGET_CELL이 모두 설정되어야만 동작합니다.
+   *                    위의 값을 true로 설정하시더라도 SHEET_INFO 안의 URL, NAME이 모두 설정되어야만 동작합니다.
    *                    이들 중 하나라도 빈 칸("")으로 설정된 경우, 뉴스 항목 저장 기능은 동작하지 않습니다.
    * - IS_ENABLED     : 뉴스 항목의 구글 시트 저장 여부 (쌍따옴표 없이 true/false로만 입력)
    * - SHEET_INFO     : 뉴스 항목을 저장할 구글 시트에 대한 설정값 모음
