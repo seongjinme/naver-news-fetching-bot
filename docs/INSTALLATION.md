@@ -72,16 +72,19 @@ Webhook은 새로 들어온 데이터에 대해 실시간으로 알림을 받을
 
 뉴스봇을 처음 실행하면 **메신저 및 구글 시트와의 연결을 위한 인증 팝업**이 뜨게 됩니다. 아래 순서에 맞춰 권한 허용을 진행해 주세요.
 
-1. Google Apps Script 화면 상단에서 아래 사진과 같은 영역을 확인 후, 함수명을 `runNewsFetchingBot`으로 선택 후 "실행"을 클릭합니다.
+1. 위의 3~4번 단계를 마치신 후, 프로젝트 화면의 좌측 "파일(Files)"에서 `Code.gs`를 선택해 주세요.
+   <p><img src="../static/images/run_file_v3.0.png" width="500" alt="Select Code.gs file" /></p>
+
+2. `Code.gs` 파일이 선택된 상태로, 편집기 화면 상단에서 아래 사진과 같은 영역을 확인 후, 함수명을 `runNewsFetchingBot`으로 선택 후 "실행"을 클릭합니다.
    <p><img src="../static/images/run_v3.0.png" width="500" alt="Run fetching bot" /></p>
 
-2. 아래와 같이 권한 인증 팝업이 뜹니다. "권한 검토"를 누릅니다.
+3. 아래와 같이 권한 인증 팝업이 뜹니다. "권한 검토"를 누릅니다.
    <p><img src="../static/images/auth_popup_required.png" width="300" alt="Review auth popup" /></p>
 
-3. 메신저, Google SpreadSheets 관련 액세스 허용 팝업이 뜹니다. "허용"을 누릅니다.
+4. 메신저, Google SpreadSheets 관련 액세스 허용 팝업이 뜹니다. "허용"을 누릅니다.
    <p><img src="../static/images/auth_popup_allow.png" width="300" alt="Allow authentication" /></p>
 
-4. 슬랙(Slack) 등 Google 외부의 서비스와 처음 연동할 때엔 "인증되지 않은 앱" 관련 경고 팝업이 뜨기도 합니다. 이때엔 팝업 왼쪽 하단의 `Advanced`를 누른 뒤, 화면 하단에 작게 쓰여진 `Go to [앱 URL] (Unsafe)` 링크를 눌러주시면 됩니다.
+5. 슬랙(Slack) 등 Google 외부의 서비스와 처음 연동할 때엔 "인증되지 않은 앱" 관련 경고 팝업이 뜨기도 합니다. 이때엔 팝업 왼쪽 하단의 `Advanced`를 누른 뒤, 화면 하단에 작게 쓰여진 `Go to [앱 URL] (Unsafe)` 링크를 눌러주시면 됩니다.
    <p><img src="../static/images/auth_popup_isnt_verified.png" width="300" alt="Allow authentication" /></p>
 
-5. 연결하신 메신저 앱으로 `[Naver News Fetching Bot 설치 완료]` 메시지를 수신하셨다면, 정상적으로 설치가 완료된 것입니다.
+6. 연결하신 메신저 앱으로 `[Naver News Fetching Bot 설치 완료]` 메시지를 수신하셨다면, 정상적으로 설치가 완료된 것입니다.
