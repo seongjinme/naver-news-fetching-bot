@@ -40,18 +40,19 @@ Webhook은 새로 들어온 데이터에 대해 실시간으로 알림을 받을
 
 1. 구글 계정에 로그인하신 뒤, [Google Apps Script](https://script.google.com) 환경에 접속하셔서 왼쪽 상단의 "새 프로젝트(New project)" 버튼을 눌러 새 프로젝트를 생성해 주세요.
 2. 프로젝트 화면 왼쪽 상단의 파일 목록에서 `Code.gs`를 클릭하신 후, 본 저장소의 `/dist/` 경로에 있는 [Code.gs](../dist/Code.gs) 파일 내용을 복사하여 그대로 붙여넣습니다.
-3. 프로젝트 화면 왼쪽 상단의 파일 목록에서 "+" -> "Script" 버튼을 차례로 누르시면 새 스크립트 파일이 추가됩니다. 2개의 파일(`config.gs`, `source.gs`)을 추가해 주세요.
-4. 저장소의 `/dist/` 경로에 있는 나머지 파일들의 내용을 위에서 추가한 파일에 각각 복사하여 붙여넣습니다.
+3. 프로젝트 화면 왼쪽 상단의 파일 목록에서 "+" -> "Script" 버튼을 차례로 누르시면 새 스크립트 파일이 추가됩니다. 2개의 파일(`config.gs`, `source.gs`)을 추가해 주세요.<p><img src="../static/images/add_script_file.png" width="300" alt="Add a script file" /></p>
+4. 저장소의 `/dist/` 경로에 있는 나머지 파일들의 내용을 위에서 추가한 파일에 각각 복사하여 붙여넣고 저장합니다.
 
 - `config.gs`에는 [config.gs](../dist/config.gs)의 내용을,
-- `source.gs`에는 [source.gs](../dist/source.gs)의 내용을 넣어주세요.
+- `source.gs`에는 [source.gs](../dist/source.gs)의 내용을 넣어 주세요.
+- 스크립트의 변경된 내용은 아래에 붉은색으로 표시된 것과 같은 아이콘 버튼을 눌러 저장하실 수 있습니다. 이 버튼을 누르면 프로젝트 안의 모든 파일들에 대한 변경 내용이 일괄 저장됩니다.<p><img src="../static/images/save_file_v3.0.png" width="500" alt="Save the code files" /></p>
 
 ### (선택사항) 뉴스 백업용 구글 시트 사용을 위한 API 추가하기
 
-원하시는 구글 시트 문서로 뉴스를 백업하시려면 아래 절차를 추가로 진행해 주셔야 합니다.
+원하시는 구글 시트 문서로 뉴스를 백업하시려면 아래의 절차를 추가로 진행해 주셔야 합니다.
 
-5. 프로젝트 화면의 왼쪽 메뉴에서 "서비스(Services)" 우측의 "+" 버튼을 누릅니다.
-6. API 추가 팝업 화면에서 `Google Sheets API`를 찾아 선택 후 추가합니다. 이때 식별자 이름은 기본값인 `Sheets`를 유지합니다.<p><img src="../static/images/add_sheets_api.png" width="300" alt="Add Google Sheets API to the project" /></p>
+5. 프로젝트 화면의 왼쪽 메뉴에서 "서비스(Services)" 우측의 "+" 버튼을 누릅니다.<p><img src="../static/images/add_service.png" width="300" alt="Add new service to the project" /></p>
+6. API 추가 팝업 화면에서 `Google Sheets API`를 찾아 선택 후 "추가" 버튼을 누릅니다. 이때 식별자 이름은 기본값인 `Sheets`를 유지합니다.<p><img src="../static/images/add_sheets_api.png" width="300" alt="Add Google Sheets API to the project" /></p>
 
 ## 4. 뉴스봇 실행에 필요한 설정값 입력하기
 

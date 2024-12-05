@@ -44,6 +44,6 @@
 
 1. 봇을 추가할 Google Chat 대화방(Space)에 PC로 접속한 뒤 아래 사진과 같이 “웹훅 보기”를 선택합니다.<p><img src="../static/images/manage_webhook.png" alt="Manage webhooks in Google Chat" /></p>
 
-2. 새로 추가할 Webhook의 이름과 프로필 사진 URL(선택사항)을 입력합니다.<p><img src="../static/images/add_webhook.png" width="500" alt="Add new webhook in Google Chat" /></p>
+2. 새로 추가할 Webhook의 이름과 프로필 사진 URL(선택사항)을 입력하고 '저장' 버튼을 누릅니다.<p><img src="../static/images/add_webhook.png" width="500" alt="Add new webhook in Google Chat" /></p>
 
 3. 새로 생성된 Webhook의 URL을 복사해주세요. 추후 뉴스봇 설치 과정 중 "뉴스봇 실행에 필요한 설정값 입력하기" 단계에서 이 URL을 `config.gs` 안에 입력해 주시면 됩니다.<p><img src="../static/images/add_webhook_result.png" width="500" alt="Copy URL of new webhook in Google Chat" /></p>
