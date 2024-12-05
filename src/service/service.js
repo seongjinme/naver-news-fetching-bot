@@ -90,11 +90,12 @@ export class FetchingService extends BaseNewsService {
    * @param {string[]} params.searchKeywords - 검색어 목록
    * @param {number} [params.display] - 각 검색어별 뉴스 검색 수
    * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
+   * @param {boolean} [params.filterByPubDate] - 최근 뉴스 전송 시간에 따른 필터링 여부
    * @returns {NewsItem[]} 새로 가져온 뉴스 항목들
    */
-  fetchNewsItems({ searchKeywords, display, sortByDesc }) {
+  fetchNewsItems({ searchKeywords, display, sortByDesc, filterByPubDate = true }) {
     searchKeywords.forEach((searchKeyword) => {
-      this._fetchNewsItemsForEachKeyword({ searchKeyword, display });
+      this._fetchNewsItemsForEachKeyword({ searchKeyword, display, filterByPubDate });
     });
 
     return this.getNewsItems({ sortByDesc });
@@ -105,11 +106,13 @@ export class FetchingService extends BaseNewsService {
    * @param {Object} params - 단일 검색어 뉴스 검색 옵션
    * @param {string} params.searchKeyword - 검색어
    * @param {number} [params.display] - 검색어에 대한 뉴스 검색 수
+   * @param {boolean} [params.filterByPubDate] - 최근 뉴스 전송 시간에 따른 필터링 여부
    * @private
    */
-  _fetchNewsItemsForEachKeyword({ searchKeyword, display }) {
+  _fetchNewsItemsForEachKeyword({ searchKeyword, display, filterByPubDate }) {
     const fetchUrl = this._createFetchUrl({ searchKeyword, display });
     const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
+
     if (fetchedNewsItems.length === 0) return;
 
     const newsItems = fetchedNewsItems
@@ -117,8 +120,9 @@ export class FetchingService extends BaseNewsService {
       .filter(
         (newsItem) =>
           !this._lastDeliveredNewsHashIds.includes(newsItem.hashId) &&
-          this._isAfterLatestNewsItem({ newsPubDate: newsItem.pubDate }),
+          (!filterByPubDate || this._isAfterLatestNewsItem({ newsPubDate: newsItem.pubDate })),
       );
+
     if (newsItems.length === 0) return;
 
     this._newsItems.addNewsItems(newsItems);
