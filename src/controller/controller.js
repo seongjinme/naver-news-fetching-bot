@@ -2,8 +2,8 @@ import { NewsItem } from "../domain/domain";
 import { FetchingService, MessagingService, ArchivingService } from "../service/service";
 import { PropertyManager, isTwoArraysEqual, validateConfig } from "../util/util";
 import { NewsFetchError, InitializationError } from "../util/error";
-
 import { NewsCardGenerator, MessageGenerator } from "../util/template";
+
 import CONFIG from "../user/config";
 import NEWS_SOURCE from "../user/newsSource";
 
@@ -22,7 +22,7 @@ export default class NewsFetchingBotController {
 
     this._searchKeywords = searchKeywords || [...CONFIG.KEYWORDS];
     this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
-    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate || this._createInitialLastDeliveredNewsPubDate();
+    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate || new Date().getTime();
     this._isFirstRun = isFirstRun;
 
     this._fetchingService = new FetchingService({
@@ -85,22 +85,7 @@ export default class NewsFetchingBotController {
     try {
       Logger.log("[INFO] 뉴스봇 초기 설정을 시작합니다.");
 
-      const sampleNewsItems = this._fetchingService.fetchNewsItems({
-        searchKeywords: this._searchKeywords,
-        display: 1,
-      });
-
-      if (CONFIG.DEBUG) {
-        Logger.log("[INFO] 디버그 모드 실행: 등록된 검색 키워드별 최근 1개 뉴스를 로깅합니다.");
-        this._printFetchedNewsItems(sampleNewsItems);
-      } else {
-        const sampleNewsDeliverMessage = "등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.";
-        this._messagingService.sendMessage(`[네이버 뉴스봇] ${sampleNewsDeliverMessage}`);
-        Logger.log(`[INFO] ${sampleNewsDeliverMessage}`);
-
-        this._sendNewsItems(sampleNewsItems);
-      }
-
+      this._deliverSampleNews();
       this._saveInitialProperties();
       this._deleteAllTriggers();
       this._initializeTriggerWithInterval();
@@ -300,15 +285,6 @@ export default class NewsFetchingBotController {
   }
 
   /**
-   * 마지막으로 전송된 뉴스 게재 시각의 초기값을 반환합니다.
-   * @returns {Date} 마지막으로 전송된 뉴스 게재 시각 초기값
-   * @private
-   */
-  _createInitialLastDeliveredNewsPubDate() {
-    return new Date(new Date().getTime() - 60 * 60 * 1000);
-  }
-
-  /**
    * 웹훅 서비스 목록을 가져옵니다.
    * @returns {Object} 웹훅 서비스 목록
    * @private
@@ -320,6 +296,34 @@ export default class NewsFetchingBotController {
         webhooks[key] = config.URL;
         return webhooks;
       }, {});
+  }
+
+  /**
+   * 뉴스봇 스크립트 설치 과정에서 샘플 뉴스를 받아 전송합니다.
+   * @private
+   */
+  _deliverSampleNews() {
+    const sampleNewsItems = this._fetchingService.fetchNewsItems({
+      searchKeywords: this._searchKeywords,
+      display: 1,
+      filterByPubDate: false,
+    });
+
+    if (sampleNewsItems.length <= 0) {
+      Logger.log("[INFO] 등록된 키워드로 기존에 게재된 뉴스가 아직 없습니다. 뉴스봇 설치를 계속 진행합니다.");
+      return;
+    }
+
+    const sampleNewsDeliverMessage =
+      "등록된 키워드별 샘플 뉴스를 전송합니다. 만약 기존에 게재된 뉴스가 아직 없다면 별도로 표시되지 않습니다.";
+    Logger.log(`[INFO] ${sampleNewsDeliverMessage}`);
+    this._messagingService.sendMessage(`[네이버 뉴스봇] ${sampleNewsDeliverMessage}`);
+
+    this._printFetchedNewsItems(sampleNewsItems);
+
+    if (!CONFIG.DEBUG) {
+      this._sendNewsItems(sampleNewsItems);
+    }
   }
 
   /**
