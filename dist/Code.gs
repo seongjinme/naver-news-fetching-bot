@@ -1,5 +1,5 @@
 /*************************************************************************************************
- * Naver News Fetching Bot (v3.0.0)
+ * Naver News Fetching Bot (v3.0.1)
  * ***********************************************************************************************
  * 원하는 검색어가 포함된 최신 네이버 뉴스를 업무용 채팅 솔루션으로 전송합니다.
  * 슬랙(Slack), 디스코드(Discord), 잔디(JANDI), 구글챗(Google Chat Space)을 지원합니다.
@@ -89,7 +89,7 @@ class NewsFetchingBotController {
 
     this._searchKeywords = searchKeywords || [...CONFIG.KEYWORDS];
     this._lastDeliveredNewsHashIds = lastDeliveredNewsHashIds;
-    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate || this._createInitialLastDeliveredNewsPubDate();
+    this._lastDeliveredNewsPubDate = lastDeliveredNewsPubDate || new Date().getTime();
     this._isFirstRun = isFirstRun;
 
     this._fetchingService = new FetchingService({
@@ -152,22 +152,7 @@ class NewsFetchingBotController {
     try {
       Logger.log("[INFO] 뉴스봇 초기 설정을 시작합니다.");
 
-      const sampleNewsItems = this._fetchingService.fetchNewsItems({
-        searchKeywords: this._searchKeywords,
-        display: 1,
-      });
-
-      if (CONFIG.DEBUG) {
-        Logger.log("[INFO] 디버그 모드 실행: 등록된 검색 키워드별 최근 1개 뉴스를 로깅합니다.");
-        this._printFetchedNewsItems(sampleNewsItems);
-      } else {
-        const sampleNewsDeliverMessage = "등록된 검색 키워드별 최근 1개 뉴스를 샘플로 전송하여 드립니다.";
-        this._messagingService.sendMessage(`[네이버 뉴스봇] ${sampleNewsDeliverMessage}`);
-        Logger.log(`[INFO] ${sampleNewsDeliverMessage}`);
-
-        this._sendNewsItems(sampleNewsItems);
-      }
-
+      this._deliverSampleNews();
       this._saveInitialProperties();
       this._deleteAllTriggers();
       this._initializeTriggerWithInterval();
@@ -367,15 +352,6 @@ class NewsFetchingBotController {
   }
 
   /**
-   * 마지막으로 전송된 뉴스 게재 시각의 초기값을 반환합니다.
-   * @returns {Date} 마지막으로 전송된 뉴스 게재 시각 초기값
-   * @private
-   */
-  _createInitialLastDeliveredNewsPubDate() {
-    return new Date(new Date().getTime() - 60 * 60 * 1000);
-  }
-
-  /**
    * 웹훅 서비스 목록을 가져옵니다.
    * @returns {Object} 웹훅 서비스 목록
    * @private
@@ -387,6 +363,34 @@ class NewsFetchingBotController {
         webhooks[key] = config.URL;
         return webhooks;
       }, {});
+  }
+
+  /**
+   * 뉴스봇 스크립트 설치 과정에서 샘플 뉴스를 받아 전송합니다.
+   * @private
+   */
+  _deliverSampleNews() {
+    const sampleNewsItems = this._fetchingService.fetchNewsItems({
+      searchKeywords: this._searchKeywords,
+      display: 1,
+      filterByPubDate: false,
+    });
+
+    if (sampleNewsItems.length <= 0) {
+      Logger.log("[INFO] 등록된 키워드로 기존에 게재된 뉴스가 아직 없습니다. 뉴스봇 설치를 계속 진행합니다.");
+      return;
+    }
+
+    const sampleNewsDeliverMessage =
+      "등록된 키워드별 샘플 뉴스를 전송합니다. 만약 기존에 게재된 뉴스가 아직 없다면 별도로 표시되지 않습니다.";
+    Logger.log(`[INFO] ${sampleNewsDeliverMessage}`);
+    this._messagingService.sendMessage(`[네이버 뉴스봇] ${sampleNewsDeliverMessage}`);
+
+    this._printFetchedNewsItems(sampleNewsItems);
+
+    if (!CONFIG.DEBUG) {
+      this._sendNewsItems(sampleNewsItems);
+    }
   }
 
   /**
@@ -756,11 +760,12 @@ class FetchingService extends BaseNewsService {
    * @param {string[]} params.searchKeywords - 검색어 목록
    * @param {number} [params.display] - 각 검색어별 뉴스 검색 수
    * @param {boolean} [params.sortByDesc] - 뉴스 항목들의 시간 역순 정렬 여부
+   * @param {boolean} [params.filterByPubDate] - 최근 뉴스 전송 시간에 따른 필터링 여부
    * @returns {NewsItem[]} 새로 가져온 뉴스 항목들
    */
-  fetchNewsItems({ searchKeywords, display, sortByDesc }) {
+  fetchNewsItems({ searchKeywords, display, sortByDesc, filterByPubDate = true }) {
     searchKeywords.forEach((searchKeyword) => {
-      this._fetchNewsItemsForEachKeyword({ searchKeyword, display });
+      this._fetchNewsItemsForEachKeyword({ searchKeyword, display, filterByPubDate });
     });
 
     return this.getNewsItems({ sortByDesc });
@@ -771,11 +776,13 @@ class FetchingService extends BaseNewsService {
    * @param {Object} params - 단일 검색어 뉴스 검색 옵션
    * @param {string} params.searchKeyword - 검색어
    * @param {number} [params.display] - 검색어에 대한 뉴스 검색 수
+   * @param {boolean} [params.filterByPubDate] - 최근 뉴스 전송 시간에 따른 필터링 여부
    * @private
    */
-  _fetchNewsItemsForEachKeyword({ searchKeyword, display }) {
+  _fetchNewsItemsForEachKeyword({ searchKeyword, display, filterByPubDate }) {
     const fetchUrl = this._createFetchUrl({ searchKeyword, display });
     const fetchedNewsItems = this._fetchNewsItemsFromAPI(fetchUrl);
+
     if (fetchedNewsItems.length === 0) return;
 
     const newsItems = fetchedNewsItems
@@ -783,8 +790,9 @@ class FetchingService extends BaseNewsService {
       .filter(
         (newsItem) =>
           !this._lastDeliveredNewsHashIds.includes(newsItem.hashId) &&
-          this._isAfterLatestNewsItem({ newsPubDate: newsItem.pubDate }),
+          (!filterByPubDate || this._isAfterLatestNewsItem({ newsPubDate: newsItem.pubDate })),
       );
+
     if (newsItems.length === 0) return;
 
     this._newsItems.addNewsItems(newsItems);
