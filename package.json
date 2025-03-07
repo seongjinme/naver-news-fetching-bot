@@ -1,6 +1,6 @@
 {
   "name": "naver-news-fetching-bot",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "특정 검색어에 대한 네이버 뉴스 최신 기사를 자동 수집하여 슬랙 Slack, 잔디 Jandi 또는 구글챗 Google Chat 으로 전송하는 Google Apps Script 기반 서버리스 뉴스봇",
   "main": "./src/main.js",
   "repository": {

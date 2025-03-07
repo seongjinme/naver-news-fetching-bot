@@ -1,5 +1,12 @@
 # Changelog
 
+## Ver 3.0.2 (2025-03-07)
+
+### Fixed
+
+- Google Chat에서 알림 메시지 형식이 아닌 뉴스 항목만 전송되지 않던 문제 수정
+  - Google Chat의 Cards v1 인터페이스 지원이 중단되어, 기존 뉴스 카드 템플릿을 [v2 인터페이스](https://developers.google.com/workspace/chat/api/reference/rest/v1/cards) 기반으로 업데이트
+
 ## Ver 3.0.1 (2024-12-05)
 
 ### Fixed
