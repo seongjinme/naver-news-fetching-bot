@@ -1,5 +1,5 @@
 /*************************************************************************************************
- * Naver News Fetching Bot (v3.0.1)
+ * Naver News Fetching Bot (v3.0.2)
  * ***********************************************************************************************
  * 원하는 검색어가 포함된 최신 네이버 뉴스를 업무용 채팅 솔루션으로 전송합니다.
  * 슬랙(Slack), 디스코드(Discord), 잔디(JANDI), 구글챗(Google Chat Space)을 지원합니다.
@@ -1265,43 +1265,48 @@ const NewsCardGenerator = {
   googleChat: ({ title, link, source, description, pubDateText, keywords }) => {
     return {
       fallbackText: `[${source}] ${title}`,
-      cards: [
+      cardsV2: [
         {
-          header: {
-            title: title,
-            subtitle: `${source} | ${pubDateText}`,
-          },
-          sections: [
-            {
-              header: source,
-              widgets: [
-                {
-                  textParagraph: {
-                    text: description,
+          card: {
+            header: {
+              title: title,
+            },
+            sections: [
+              {
+                widgets: [
+                  {
+                    textParagraph: {
+                      text: `<b>${source}</b> | ${pubDateText}`,
+                    },
                   },
-                },
-                {
-                  textParagraph: {
-                    text: `<b>검색어 :</b> ${keywords.join(", ")}`,
+                  {
+                    textParagraph: {
+                      text: description,
+                    },
                   },
-                },
-                {
-                  buttonList: {
-                    buttons: [
-                      {
-                        text: "기사보기",
-                        onClick: {
-                          openLink: {
-                            url: link,
+                  {
+                    textParagraph: {
+                      text: `<b>검색어 :</b> ${keywords.join(", ")}`,
+                    },
+                  },
+                  {
+                    buttonList: {
+                      buttons: [
+                        {
+                          text: "기사보기",
+                          onClick: {
+                            openLink: {
+                              url: link,
+                            },
                           },
                         },
-                      },
-                    ],
+                      ],
+                    },
                   },
-                },
-              ],
-            },
-          ],
+                ],
+              },
+            ],
+          },
         },
       ],
     };
