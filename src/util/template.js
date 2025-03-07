@@ -105,43 +105,48 @@ export const NewsCardGenerator = {
   googleChat: ({ title, link, source, description, pubDateText, keywords }) => {
     return {
       fallbackText: `[${source}] ${title}`,
-      cards: [
+      cardsV2: [
         {
-          header: {
-            title: title,
-            subtitle: `${source} | ${pubDateText}`,
-          },
-          sections: [
-            {
-              header: source,
-              widgets: [
-                {
-                  textParagraph: {
-                    text: description,
+          card: {
+            header: {
+              title: title,
+            },
+            sections: [
+              {
+                widgets: [
+                  {
+                    textParagraph: {
+                      text: `<b>${source}</b> | ${pubDateText}`,
+                    },
                   },
-                },
-                {
-                  textParagraph: {
-                    text: `<b>검색어 :</b> ${keywords.join(", ")}`,
+                  {
+                    textParagraph: {
+                      text: description,
+                    },
                   },
-                },
-                {
-                  buttonList: {
-                    buttons: [
-                      {
-                        text: "기사보기",
-                        onClick: {
-                          openLink: {
-                            url: link,
+                  {
+                    textParagraph: {
+                      text: `<b>검색어 :</b> ${keywords.join(", ")}`,
+                    },
+                  },
+                  {
+                    buttonList: {
+                      buttons: [
+                        {
+                          text: "기사보기",
+                          onClick: {
+                            openLink: {
+                              url: link,
+                            },
                           },
                         },
-                      },
-                    ],
+                      ],
+                    },
                   },
-                },
-              ],
-            },
-          ],
+                ],
+              },
+            ],
+          },
         },
       ],
     };
